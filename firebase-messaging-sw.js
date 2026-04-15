@@ -2,11 +2,11 @@ importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js'
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  apiKey:            "AIzaSyAx-a9RjUY_l3SXI-0APMj4a9aRyDGZYQQ",           // từ firebaseConfig
-  authDomain:        "thongbaocuochop.firebaseapp.com",
-  projectId:         "thongbaocuochop",
-  messagingSenderId: "241732431165",
-  appId:             "1:241732431165:web:2e16e5ffeb2de9d536e954"
+  apiKey:            "AIzaSyCv_sjgaGsGsRgthyXGmE-eztH93RJlXUE",           // từ firebaseConfig
+  authDomain:        "thongbaocuochop-da595.firebaseapp.com",
+  projectId:         "thongbaocuochop-da595",
+  messagingSenderId: "361920499933",
+  appId:             "1:361920499933:web:c994f744e2d64f0c6acb34"
 });
 
 const messaging = firebase.messaging();
@@ -45,7 +45,7 @@ self.addEventListener('notificationclick', (event) => {
         }
         // Nếu chưa mở thì mở tab mới — thay URL bằng Web App của bạn
         if (clients.openWindow) {
-          return clients.openWindow('https://script.google.com/a/macros/spxexpress.com/s/AKfycbxMKczGoNBYaNPIVU09D_Y3NN4MDl9b2zjyfdHwc4B8Eb-RCTb9KSGFxzqukllhj-ZL/exec');
+          return clients.openWindow('https://script.google.com/macros/s/AKfycbxquzejQCD3GQYdQR7gyyT4_Fhutu9HLJZ3BkIsKVNfx2UfQMoO7PvMps3mxCufTvWASg/exec');
         }
       })
   );
