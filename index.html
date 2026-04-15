@@ -239,7 +239,7 @@ async function registerNotification() {
     // Bước 4 — Gửi token lên Apps Script lưu vào Sheet
     // Thay thế đoạn google.script.run bằng:
     showStatus("Đang lưu thông tin lên hệ thống...", "info");
-    const gasApiUrl = "https://script.google.com/macros/s/AKfycbxquzejQCD3GQYdQR7gyyT4_Fhutu9HLJZ3BkIsKVNfx2UfQMoO7PvMps3mxCufTvWASg/exec";
+    const gasApiUrl = "https://script.google.com/macros/s/AKfycbyrpWU_yoQT1hNppkh_DvM--rgAnnoQP_TDgHLg5OmvT_WLexfUgVD6QqbKHgBMfiNHhA/exec";
     
     const response = await fetch(gasApiUrl, {
       method: "POST",
