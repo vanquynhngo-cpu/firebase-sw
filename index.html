@@ -171,7 +171,7 @@
 let isLoginMode = true; // Mặc định là màn hình Đăng nhập
 
 // API URL (Lấy từ Google Apps Script của bạn)
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyBEZUy4D8qCgrlqiOiua3HqjBaBkajGxThfIJicKKIB2J3Jh0p89qlv9Jkux2OWoFTpw/exec";
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxs8g3kHvnUzRuchPHqk0DwGMEiOvGh3xQbp44ErZf2Cc1NX0NJgZJOUyY_I7p0fM1upg/exec";
 
 // Firebase Config
 const firebaseConfig = {
@@ -257,11 +257,13 @@ async function handleSubmit() {
 
     // 4. Gửi dữ liệu lên Google Sheet (Backend)
     showStatus("Đang xử lý dữ liệu...", "info");
+    
     const payload = {
-      action: "saveToken",
+      // Đổi action tùy thuộc vào việc đang ở form Đăng nhập hay Đăng ký
+      action: isLoginMode ? "login" : "saveToken", 
       phone: phone,
       password: password,
-      displayName: isLoginMode ? "" : displayName, // Login không cần gửi tên
+      displayName: isLoginMode ? "" : displayName,
       token: token
     };
 
