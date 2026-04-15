@@ -2,119 +2,124 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notification App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>App Thông Báo - Đăng Nhập</title>
 
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js"></script>
 
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f0f2f5;
+      background: #f4f6f9;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 16px;
     }
 
     .card {
       background: white;
-      border-radius: 16px;
-      padding: 32px 28px;
+      border-radius: 20px;
+      padding: 32px 24px;
       width: 100%;
-      max-width: 420px;
-      box-shadow: 0 2px 16px rgba(0,0,0,0.10);
+      max-width: 400px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
     }
 
     .logo {
-      width: 52px; height: 52px;
-      background: #4f46e5;
-      border-radius: 14px;
+      width: 60px; height: 60px;
+      background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+      border-radius: 16px;
       display: flex; align-items: center; justify-content: center;
-      margin-bottom: 20px;
+      margin: 0 auto 24px;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
     }
-    .logo svg { width: 28px; height: 28px; fill: white; }
+    .logo svg { width: 32px; height: 32px; fill: white; }
 
-    h1 { font-size: 20px; font-weight: 600; color: #111; margin-bottom: 6px; }
-    .subtitle { font-size: 14px; color: #666; margin-bottom: 28px; line-height: 1.5; }
+    h1 { font-size: 24px; font-weight: 700; color: #111; text-align: center; margin-bottom: 8px; }
+    .subtitle { font-size: 14px; color: #6b7280; text-align: center; margin-bottom: 28px; line-height: 1.5; }
 
-    .field { margin-bottom: 16px; }
-    .field label { display: block; font-size: 13px; font-weight: 500; color: #444; margin-bottom: 6px; }
-    .field input {
-      width: 100%; padding: 10px 14px;
-      border: 1.5px solid #e0e0e0; border-radius: 10px;
-      font-size: 14px; color: #111; outline: none;
-      transition: border-color 0.2s;
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 8px; }
+    .form-group input {
+      width: 100%; padding: 14px 16px;
+      border: 1px solid #d1d5db; border-radius: 12px;
+      font-size: 15px; color: #111; background: #f9fafb;
+      outline: none; transition: all 0.2s;
     }
-    .field input:focus { border-color: #4f46e5; }
+    .form-group input:focus { border-color: #4f46e5; background: #fff; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+
+    /* Ẩn hiện phần Tên hiển thị khi chuyển tab */
+    #nameGroup {
+      display: none; /* Mặc định ẩn ở form Đăng nhập */
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    #nameGroup.show {
+      display: block;
+      opacity: 1;
+    }
 
     .btn {
-      width: 100%; padding: 13px;
+      width: 100%; padding: 14px;
       background: #4f46e5; color: white;
-      border: none; border-radius: 10px;
-      font-size: 15px; font-weight: 600;
-      cursor: pointer; margin-top: 4px;
+      border: none; border-radius: 12px;
+      font-size: 16px; font-weight: 600;
+      cursor: pointer; margin-top: 10px;
       transition: background 0.2s, opacity 0.2s;
     }
     .btn:hover  { background: #4338ca; }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn:disabled { opacity: 0.7; cursor: not-allowed; }
 
-    /* Status box */
+    .switch-mode {
+      text-align: center; margin-top: 24px; font-size: 14px; color: #6b7280;
+    }
+    .switch-mode a {
+      color: #4f46e5; font-weight: 600; text-decoration: none; margin-left: 4px; cursor: pointer;
+    }
+    .switch-mode a:hover { text-decoration: underline; }
+
+    /* Trạng thái */
     .status {
-      margin-top: 20px; padding: 14px 16px;
-      border-radius: 10px; font-size: 14px;
-      display: none; line-height: 1.5;
+      margin-top: 20px; padding: 12px 16px;
+      border-radius: 10px; font-size: 13px;
+      display: none; line-height: 1.5; text-align: center; font-weight: 500;
     }
     .status.info    { background: #eff6ff; color: #1d4ed8; display: block; }
     .status.success { background: #f0fdf4; color: #15803d; display: block; }
     .status.error   { background: #fef2f2; color: #dc2626; display: block; }
 
-    /* Notification popup (foreground) */
+    /* Thông báo nổi (Popup Foreground) */
     .popup {
-      position: fixed; top: 20px; right: 20px; z-index: 9999;
-      background: white; border-radius: 14px;
-      padding: 16px 18px; max-width: 320px; width: 90%;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
-      border-left: 4px solid #4f46e5;
-      transform: translateX(120%);
-      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-      display: flex; gap: 12px; align-items: flex-start;
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-150%);
+      z-index: 9999; background: white; border-radius: 16px;
+      padding: 16px 20px; width: 90%; max-width: 360px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      border-bottom: 4px solid #4f46e5;
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: flex; gap: 14px; align-items: flex-start;
     }
-    .popup.show { transform: translateX(0); }
+    .popup.show { transform: translateX(-50%) translateY(0); }
     .popup-icon {
-      width: 36px; height: 36px; border-radius: 10px;
+      width: 40px; height: 40px; border-radius: 12px;
       background: #ede9fe; display: flex;
       align-items: center; justify-content: center; flex-shrink: 0;
     }
-    .popup-icon svg { width: 18px; height: 18px; fill: #4f46e5; }
-    .popup-title { font-size: 14px; font-weight: 600; color: #111; margin-bottom: 3px; }
-    .popup-body  { font-size: 13px; color: #555; line-height: 1.4; }
+    .popup-icon svg { width: 20px; height: 20px; fill: #4f46e5; }
+    .popup-title { font-size: 15px; font-weight: 700; color: #111; margin-bottom: 4px; }
+    .popup-body  { font-size: 14px; color: #555; line-height: 1.4; }
     .popup-close {
-      position: absolute; top: 10px; right: 12px;
-      background: none; border: none; font-size: 18px;
-      color: #999; cursor: pointer; line-height: 1;
+      position: absolute; top: 12px; right: 12px;
+      background: none; border: none; font-size: 20px;
+      color: #9ca3af; cursor: pointer; padding: 4px;
     }
-
-    /* Steps indicator */
-    .steps {
-      display: flex; gap: 8px; margin-bottom: 24px;
-    }
-    .step {
-      flex: 1; height: 4px; border-radius: 2px;
-      background: #e5e7eb; transition: background 0.3s;
-    }
-    .step.done    { background: #4f46e5; }
-    .step.active  { background: #a5b4fc; }
   </style>
 </head>
 <body>
 
-<!-- Notification popup (foreground) -->
 <div class="popup" id="popup">
   <div class="popup-icon">
     <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V11c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
@@ -126,45 +131,49 @@
   <button class="popup-close" onclick="closePopup()">×</button>
 </div>
 
-<!-- Main card -->
 <div class="card">
-
-  <!-- Steps -->
-  <div class="steps">
-    <div class="step active"  id="step1"></div>
-    <div class="step"         id="step2"></div>
-    <div class="step"         id="step3"></div>
-  </div>
-
-  <!-- Logo -->
   <div class="logo">
     <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V11c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
   </div>
 
-  <h1>Bật thông báo</h1>
-  <p class="subtitle">Nhập thông tin để nhận thông báo tự động trên thiết bị này.</p>
+  <h1 id="formTitle">Đăng nhập</h1>
+  <p class="subtitle" id="formSubtitle">Vui lòng nhập thông tin để tiếp tục</p>
 
-  <!-- Form -->
-  <div class="field">
-    <label>Tên của bạn</label>
-    <input type="text" id="displayName" placeholder="Ví dụ: Nguyễn Văn A">
-  </div>
-  <div class="field">
-    <label>Mã nhân viên / User ID</label>
-    <input type="text" id="userId" placeholder="Ví dụ: NV001">
+  <div class="form-group">
+    <label>Số điện thoại</label>
+    <input type="tel" id="phone" placeholder="Nhập SĐT của bạn" autocomplete="tel">
   </div>
 
-  <button class="btn" id="registerBtn" onclick="registerNotification()">
-    Bật thông báo ngay
-  </button>
+  <div class="form-group">
+    <label>Mật khẩu</label>
+    <input type="password" id="password" placeholder="Nhập mật khẩu" autocomplete="current-password">
+  </div>
+
+  <div class="form-group" id="nameGroup">
+    <label>Tên hiển thị</label>
+    <input type="text" id="displayName" placeholder="Nhập tên của bạn" autocomplete="name">
+  </div>
+
+  <button class="btn" id="submitBtn" onclick="handleSubmit()">Đăng nhập ngay</button>
 
   <div class="status" id="status"></div>
+
+  <div class="switch-mode">
+    <span id="switchText">Chưa có tài khoản?</span>
+    <a id="switchLink" onclick="toggleMode()">Đăng ký</a>
+  </div>
 </div>
 
 <script>
 // =============================================
-// CẤU HÌNH — điền thông tin Firebase của bạn
+// CẤU HÌNH & TRẠNG THÁI UI
 // =============================================
+let isLoginMode = true; // Mặc định là màn hình Đăng nhập
+
+// API URL (Lấy từ Google Apps Script của bạn)
+const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyBEZUy4D8qCgrlqiOiua3HqjBaBkajGxThfIJicKKIB2J3Jh0p89qlv9Jkux2OWoFTpw/exec";
+
+// Firebase Config
 const firebaseConfig = {
   apiKey:            "AIzaSyCv_sjgaGsGsRgthyXGmE-eztH93RJlXUE",
   authDomain:        "thongbaocuochop-da595.firebaseapp.com",
@@ -172,129 +181,134 @@ const firebaseConfig = {
   messagingSenderId: "361920499933",
   appId:             "1:361920499933:web:c994f744e2d64f0c6acb34"
 };
-
-// VAPID Key từ Firebase Console → Cloud Messaging → Web Push certificates
 const VAPID_KEY = "BNL5Qb8_WQlsWgsbgzWY8iSpPMHmWFoUklwF9r2dk6dZkf6rfj6C1bUkO-6n11EGxGilAjYh-sjsZw_WCpJvC4k";
+const SW_URL = "./firebase-messaging-sw.js";
 
-// URL file Service Worker đã host trên GitHub Pages (bước 2)
-const SW_URL = "./firebase-messaging-sw.js"; // Hoặc "/firebase-sw/firebase-messaging-sw.js"
-
-// =============================================
-// KHỞI TẠO FIREBASE
-// =============================================
+// Khởi tạo Firebase
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
 // =============================================
-// HÀM CHÍNH — ĐĂNG KÝ NHẬN THÔNG BÁO
+// CHUYỂN ĐỔI UI (ĐĂNG NHẬP <-> ĐĂNG KÝ)
 // =============================================
-async function registerNotification() {
-  const userId      = document.getElementById("userId").value.trim();
+function toggleMode() {
+  isLoginMode = !isLoginMode;
+  const nameGroup = document.getElementById("nameGroup");
+  
+  if (isLoginMode) {
+    nameGroup.classList.remove("show");
+    document.getElementById("formTitle").textContent = "Đăng nhập";
+    document.getElementById("submitBtn").textContent = "Đăng nhập ngay";
+    document.getElementById("switchText").textContent = "Chưa có tài khoản?";
+    document.getElementById("switchLink").textContent = "Đăng ký";
+  } else {
+    nameGroup.classList.add("show");
+    document.getElementById("formTitle").textContent = "Đăng ký tài khoản";
+    document.getElementById("submitBtn").textContent = "Tạo tài khoản";
+    document.getElementById("switchText").textContent = "Đã có tài khoản?";
+    document.getElementById("switchLink").textContent = "Đăng nhập";
+  }
+  
+  // Xóa thông báo lỗi cũ nếu có
+  document.getElementById("status").style.display = "none";
+}
+
+// =============================================
+// XỬ LÝ GỬI FORM (ĐĂNG NHẬP / ĐĂNG KÝ)
+// =============================================
+async function handleSubmit() {
+  const phone = document.getElementById("phone").value.trim();
+  const password = document.getElementById("password").value.trim();
   const displayName = document.getElementById("displayName").value.trim();
 
-  // Validate
-  if (!userId || !displayName) {
-    showStatus("Vui lòng điền đầy đủ thông tin!", "error");
+  // Validate Form
+  if (!phone || !password) {
+    showStatus("Vui lòng nhập SĐT và Mật khẩu!", "error");
+    return;
+  }
+  if (!isLoginMode && !displayName) {
+    showStatus("Vui lòng nhập Tên hiển thị để đăng ký!", "error");
     return;
   }
 
-  const btn = document.getElementById("registerBtn");
-  btn.disabled   = true;
-  btn.textContent = "Đang xử lý...";
-  setStep(1);
+  const btn = document.getElementById("submitBtn");
+  btn.disabled = true;
+  btn.textContent = "Đang kết nối...";
 
   try {
-    // Bước 1 — Xin quyền thông báo từ trình duyệt
-    showStatus("Đang xin quyền thông báo...", "info");
+    // 1. Cấp quyền nhận thông báo
+    showStatus("Đang thiết lập thiết bị...", "info");
     const permission = await Notification.requestPermission();
-
     if (permission !== "granted") {
-      showStatus("Bạn đã từ chối thông báo. Vào Settings trình duyệt để bật lại.", "error");
-      resetBtn();
-      return;
+      throw new Error("Bạn đã từ chối nhận thông báo. Vui lòng bật lại trong cài đặt.");
     }
 
-    setStep(2);
-
-    // Bước 2 — Đăng ký Service Worker từ GitHub Pages
-    showStatus("Đang đăng ký service worker...", "info");
+    // 2. Đăng ký Service Worker
     const swReg = await navigator.serviceWorker.register(SW_URL);
     await navigator.serviceWorker.ready;
 
-    // Bước 3 — Lấy FCM Token
-    showStatus("Đang lấy token thiết bị...", "info");
+    // 3. Lấy FCM Token từ Firebase
     const token = await messaging.getToken({
-      vapidKey:                    VAPID_KEY,
-      serviceWorkerRegistration:   swReg
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: swReg
     });
 
-    if (!token) {
-      showStatus("Không lấy được token. Thử lại sau.", "error");
-      resetBtn();
-      return;
-    }
+    if (!token) throw new Error("Không thể tạo mã thiết bị. Thử lại sau.");
 
-    setStep(3);
+    // 4. Gửi dữ liệu lên Google Sheet (Backend)
+    showStatus("Đang xử lý dữ liệu...", "info");
+    const payload = {
+      action: "saveToken",
+      phone: phone,
+      password: password,
+      displayName: isLoginMode ? "" : displayName, // Login không cần gửi tên
+      token: token
+    };
 
-    // Bước 4 — Gửi token lên Apps Script lưu vào Sheet
-    // Thay thế đoạn google.script.run bằng:
-    showStatus("Đang lưu thông tin lên hệ thống...", "info");
-    const gasApiUrl = "https://script.google.com/macros/s/AKfycbyrpWU_yoQT1hNppkh_DvM--rgAnnoQP_TDgHLg5OmvT_WLexfUgVD6QqbKHgBMfiNHhA/exec";
-    
-    const response = await fetch(gasApiUrl, {
+    const response = await fetch(GAS_API_URL, {
       method: "POST",
-      body: JSON.stringify({
-        action: "saveToken",
-        userId: userId,
-        token: token,
-        displayName: displayName
-      })
+      body: JSON.stringify(payload)
     });
 
-const result = await response.json();
-if(result.success) {
-    showStatus("✅ Bật thông báo thành công!", "success");
-}
+    const result = await response.json();
 
-    // Thành công!
-    showStatus(
-      "✅ Bật thông báo thành công! Thiết bị này sẽ nhận thông báo tự động.",
-      "success"
-    );
-    btn.textContent = "✅ Đã bật thông báo";
-
-    // Test popup foreground
-    setTimeout(() => {
-      showPopup("Chào " + displayName + "!", "Bạn sẽ nhận thông báo tự động từ bây giờ.");
-    }, 1000);
+    // Hoàn tất
+    if (result.success) {
+      const msgText = isLoginMode ? "✅ Đăng nhập thành công!" : "✅ Tạo tài khoản thành công!";
+      showStatus(msgText + " Thiết bị đã sẵn sàng nhận thông báo.", "success");
+      btn.textContent = isLoginMode ? "Đã đăng nhập" : "Đã đăng ký";
+      
+      // Popup Test
+      setTimeout(() => {
+        showPopup("Hệ thống", "Chào mừng bạn, cấu hình thông báo đã hoàn tất!");
+      }, 1500);
+    } else {
+      throw new Error(result.error || "Có lỗi xảy ra từ máy chủ.");
+    }
 
   } catch (err) {
     console.error(err);
-    showStatus("Lỗi: " + err.message, "error");
-    resetBtn();
+    showStatus(err.message, "error");
+    btn.disabled = false;
+    btn.textContent = isLoginMode ? "Đăng nhập ngay" : "Tạo tài khoản";
   }
 }
 
 // =============================================
-// XỬ LÝ THÔNG BÁO KHI APP ĐANG MỞ (FOREGROUND)
+// XỬ LÝ THÔNG BÁO FOREGROUND
 // =============================================
 messaging.onMessage((payload) => {
-  console.log("Nhận thông báo foreground:", payload);
   const { title, body } = payload.notification;
   showPopup(title, body);
 });
 
-// =============================================
-// HIỆN POPUP THÔNG BÁO (FOREGROUND)
-// =============================================
+// Hiển thị Popup góc trên
 function showPopup(title, body) {
   document.getElementById("popup-title").textContent = title;
   document.getElementById("popup-body").textContent  = body;
   
   const popup = document.getElementById("popup");
   popup.classList.add("show");
-
-  // Tự ẩn sau 5 giây
   setTimeout(() => closePopup(), 5000);
 }
 
@@ -302,37 +316,17 @@ function closePopup() {
   document.getElementById("popup").classList.remove("show");
 }
 
-// =============================================
-// HELPERS
-// =============================================
 function showStatus(msg, type) {
   const el = document.getElementById("status");
   el.textContent  = msg;
   el.className    = "status " + type;
 }
 
-function resetBtn() {
-  const btn = document.getElementById("registerBtn");
-  btn.disabled    = false;
-  btn.textContent = "Bật thông báo ngay";
-}
-
-function setStep(n) {
-  ["step1","step2","step3"].forEach((id, i) => {
-    const el = document.getElementById(id);
-    el.className = "step " + (i < n ? "done" : i === n ? "active" : "");
-  });
-}
-
-// Kiểm tra trình duyệt có hỗ trợ không
+// Kiểm tra trình duyệt
 window.onload = () => {
-  if (!("Notification" in window)) {
-    showStatus("Trình duyệt này không hỗ trợ thông báo. Dùng Chrome hoặc Edge.", "error");
-    document.getElementById("registerBtn").disabled = true;
-  }
-  if (!("serviceWorker" in navigator)) {
-    showStatus("Trình duyệt này không hỗ trợ Service Worker.", "error");
-    document.getElementById("registerBtn").disabled = true;
+  if (!("Notification" in window) || !("serviceWorker" in navigator)) {
+    showStatus("Trình duyệt không hỗ trợ tính năng này.", "error");
+    document.getElementById("submitBtn").disabled = true;
   }
 };
 </script>
