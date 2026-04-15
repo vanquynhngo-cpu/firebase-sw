@@ -45,7 +45,7 @@ self.addEventListener('notificationclick', (event) => {
         }
         // Nếu chưa mở thì mở tab mới — thay URL bằng Web App của bạn
         if (clients.openWindow) {
-          return clients.openWindow('YOUR_APPS_SCRIPT_WEB_APP_URL');
+          return clients.openWindow('https://script.google.com/a/macros/spxexpress.com/s/AKfycbxMKczGoNBYaNPIVU09D_Y3NN4MDl9b2zjyfdHwc4B8Eb-RCTb9KSGFxzqukllhj-ZL/exec');
         }
       })
   );
