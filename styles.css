@@ -1,0 +1,336 @@
+/*
+ * styles.css
+ * ─────────────────────────────────────────────
+ * Toàn bộ CSS của ứng dụng MeetSync.
+ * Tách theo section để dễ tìm và chỉnh sửa.
+ */
+
+/* ── VARIABLES ───────────────────────────────── */
+:root {
+  --ink:      #0f1117;
+  --ink2:     #3d4151;
+  --ink3:     #7c8399;
+  --paper:    #ffffff;
+  --surface:  #f5f6fa;
+  --border:   #e4e6ef;
+  --accent:   #2563eb;
+  --accent-h: #1d4ed8;
+  --accent-s: #eff6ff;
+  --green:    #16a34a;
+  --green-s:  #f0fdf4;
+  --red:      #dc2626;
+  --red-s:    #fef2f2;
+  --amber:    #d97706;
+  --amber-s:  #fffbeb;
+  --radius:   14px;
+  --shadow:   0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
+}
+
+/* ── RESET ───────────────────────────────────── */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Be Vietnam Pro', sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* ── AUTH SCREEN ─────────────────────────────── */
+#auth-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: linear-gradient(160deg, #f0f4ff 0%, #fafafa 60%);
+}
+
+.auth-card {
+  background: var(--paper);
+  border-radius: 24px;
+  padding: 40px 36px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 8px 40px rgba(37,99,235,.10), 0 1px 4px rgba(0,0,0,.06);
+  border: 1px solid var(--border);
+}
+
+/* Brand */
+.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
+.brand-icon {
+  width: 44px; height: 44px;
+  background: var(--accent); border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+}
+.brand-icon svg { width: 22px; height: 22px; fill: white; }
+.brand-name { font-size: 20px; font-weight: 700; color: var(--ink); }
+.brand-name span { color: var(--accent); }
+
+/* Auth tabs */
+.auth-tabs {
+  display: flex; background: var(--surface);
+  border-radius: 10px; padding: 4px; margin-bottom: 28px;
+}
+.auth-tab {
+  flex: 1; padding: 9px; text-align: center;
+  font-size: 13px; font-weight: 600; border-radius: 7px;
+  cursor: pointer; color: var(--ink3); transition: all .2s;
+}
+.auth-tab.active {
+  background: var(--paper); color: var(--ink);
+  box-shadow: 0 1px 4px rgba(0,0,0,.10);
+}
+
+/* Form fields */
+.field { margin-bottom: 16px; }
+.field label {
+  display: block; font-size: 12px; font-weight: 600;
+  color: var(--ink2); margin-bottom: 7px; letter-spacing: .3px;
+}
+.field input, .field textarea {
+  width: 100%; padding: 12px 14px;
+  border: 1.5px solid var(--border); border-radius: 10px;
+  font-size: 14px; font-family: inherit; color: var(--ink);
+  background: var(--paper); outline: none; transition: border-color .2s;
+}
+.field input:focus, .field textarea:focus { border-color: var(--accent); }
+.field textarea { resize: vertical; min-height: 80px; }
+
+/* Buttons */
+.btn-primary {
+  width: 100%; padding: 13px;
+  background: var(--accent); color: white;
+  border: none; border-radius: 10px;
+  font-size: 15px; font-weight: 600; font-family: inherit;
+  cursor: pointer; transition: background .2s; margin-top: 4px;
+}
+.btn-primary:hover    { background: var(--accent-h); }
+.btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+
+/* Status message */
+.status-msg {
+  margin-top: 16px; padding: 11px 14px;
+  border-radius: 9px; font-size: 13px; font-weight: 500;
+  display: none; line-height: 1.5;
+}
+.status-msg.info    { background: var(--accent-s); color: var(--accent); display: block; }
+.status-msg.success { background: var(--green-s);  color: var(--green);  display: block; }
+.status-msg.error   { background: var(--red-s);    color: var(--red);    display: block; }
+
+/* ── APP SHELL ───────────────────────────────── */
+#app-screen { display: none; min-height: 100vh; flex-direction: column; }
+#app-screen.visible { display: flex; }
+
+/* Top bar */
+.topbar {
+  background: var(--paper); border-bottom: 1px solid var(--border);
+  padding: 0 24px; height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.topbar-left { display: flex; align-items: center; gap: 10px; }
+.topbar-logo {
+  width: 32px; height: 32px; background: var(--accent);
+  border-radius: 8px; display: flex; align-items: center; justify-content: center;
+}
+.topbar-logo svg { width: 16px; height: 16px; fill: white; }
+.topbar-title { font-size: 16px; font-weight: 700; color: var(--ink); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+
+.user-badge {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border-radius: 20px;
+  padding: 5px 14px 5px 8px;
+  font-size: 13px; font-weight: 500; color: var(--ink2);
+}
+.user-avatar {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: var(--accent); display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: white;
+}
+.role-pill {
+  font-size: 11px; font-weight: 600; padding: 2px 8px;
+  border-radius: 20px; letter-spacing: .3px;
+}
+.role-pill.admin { background: #fef3c7; color: #92400e; }
+.role-pill.user  { background: var(--accent-s); color: var(--accent); }
+
+.btn-logout {
+  padding: 7px 14px; background: none;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 13px; font-weight: 500; font-family: inherit;
+  color: var(--ink3); cursor: pointer; transition: all .2s;
+}
+.btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+/* Content */
+.content {
+  flex: 1; padding: 28px 24px;
+  max-width: 900px; width: 100%; margin: 0 auto;
+}
+.page-header { margin-bottom: 24px; }
+.page-title  { font-size: 22px; font-weight: 700; color: var(--ink); }
+.page-sub    { font-size: 14px; color: var(--ink3); margin-top: 3px; }
+
+/* ── ADMIN: STATS ────────────────────────────── */
+.stats-row {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 14px; margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--paper); border-radius: var(--radius);
+  padding: 20px; border: 1px solid var(--border); box-shadow: var(--shadow);
+}
+.stat-label { font-size: 12px; font-weight: 600; color: var(--ink3); letter-spacing: .4px; margin-bottom: 8px; }
+.stat-value { font-size: 28px; font-weight: 700; color: var(--ink); line-height: 1; }
+.stat-note  { font-size: 12px; color: var(--ink3); margin-top: 4px; }
+
+/* ── PANEL ───────────────────────────────────── */
+.panel {
+  background: var(--paper); border-radius: var(--radius);
+  border: 1px solid var(--border); box-shadow: var(--shadow);
+  margin-bottom: 20px; overflow: hidden;
+}
+.panel-head {
+  padding: 18px 22px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.panel-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+.panel-sub   { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+.panel-body  { padding: 22px; }
+
+/* ── FORM GRID ───────────────────────────────── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-grid .full { grid-column: 1 / -1; }
+
+/* ── SEND BUTTON ─────────────────────────────── */
+.btn-send {
+  padding: 12px 28px; background: var(--accent); color: white;
+  border: none; border-radius: 10px;
+  font-size: 14px; font-weight: 600; font-family: inherit;
+  cursor: pointer; transition: background .2s;
+  display: flex; align-items: center; gap: 8px;
+}
+.btn-send svg  { width: 16px; height: 16px; fill: white; }
+.btn-send:hover    { background: var(--accent-h); }
+.btn-send:disabled { opacity: .6; cursor: not-allowed; }
+
+.send-result {
+  margin-top: 14px; padding: 12px 16px;
+  border-radius: 10px; font-size: 13px; font-weight: 500; display: none;
+}
+.send-result.success { background: var(--green-s); color: var(--green); display: block; }
+.send-result.error   { background: var(--red-s);   color: var(--red);   display: block; }
+
+/* ── MEETING CARDS ───────────────────────────── */
+.meeting-list { display: flex; flex-direction: column; gap: 12px; }
+
+.meeting-card {
+  border: 1.5px solid var(--border); border-radius: 12px;
+  padding: 18px 20px; background: var(--paper);
+  transition: border-color .2s, box-shadow .2s;
+}
+.meeting-card:hover { border-color: #c7d2fe; box-shadow: 0 4px 16px rgba(37,99,235,.08); }
+
+.meeting-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px; margin-bottom: 10px;
+}
+.meeting-title-row { flex: 1; }
+.meeting-name { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+.meeting-body { font-size: 13px; color: var(--ink3); line-height: 1.5; }
+
+.badge {
+  font-size: 11px; font-weight: 600; padding: 3px 10px;
+  border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+}
+.badge-active  { background: var(--green-s); color: var(--green); }
+.badge-expired { background: var(--surface); color: var(--ink3); }
+
+.meeting-meta {
+  display: flex; align-items: center; gap: 16px;
+  font-size: 12px; color: var(--ink3); margin-bottom: 14px; flex-wrap: wrap;
+}
+.meeting-meta span { display: flex; align-items: center; gap: 5px; }
+.meeting-meta svg  { width: 12px; height: 12px; fill: var(--ink3); }
+
+/* RSVP */
+.rsvp-row { display: flex; gap: 10px; }
+.btn-yes, .btn-no {
+  flex: 1; padding: 11px;
+  border: none; border-radius: 9px;
+  font-size: 13px; font-weight: 600; font-family: inherit;
+  cursor: pointer; transition: all .2s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.btn-yes { background: var(--green-s); color: var(--green); }
+.btn-yes:hover  { background: #dcfce7; }
+.btn-no  { background: var(--red-s);   color: var(--red);   }
+.btn-no:hover   { background: #fee2e2; }
+.btn-yes.chosen { background: var(--green); color: white; }
+.btn-no.chosen  { background: var(--red);   color: white; }
+.btn-yes:disabled, .btn-no:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Admin response chips */
+.response-summary { display: flex; gap: 10px; margin-top: 12px; }
+.res-chip {
+  flex: 1; padding: 9px 12px; border-radius: 9px;
+  font-size: 12px; font-weight: 600; text-align: center;
+}
+.res-chip.yes     { background: var(--green-s); color: var(--green); }
+.res-chip.no      { background: var(--red-s);   color: var(--red); }
+.res-chip.pending { background: var(--amber-s); color: var(--amber); }
+
+/* ── EMPTY STATE ─────────────────────────────── */
+.empty { padding: 48px 24px; text-align: center; color: var(--ink3); }
+.empty svg { width: 48px; height: 48px; fill: var(--border); margin-bottom: 14px; }
+.empty p   { font-size: 14px; }
+
+/* ── POPUP ───────────────────────────────────── */
+.popup {
+  position: fixed; top: 20px; right: 20px; z-index: 9999;
+  background: var(--paper); border-radius: 16px;
+  padding: 16px 18px; max-width: 340px; width: calc(100% - 40px);
+  box-shadow: 0 12px 40px rgba(0,0,0,.15);
+  border-left: 4px solid var(--accent);
+  transform: translateX(130%);
+  transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+  display: flex; gap: 12px; align-items: flex-start;
+}
+.popup.show { transform: translateX(0); }
+.popup-icon {
+  width: 36px; height: 36px; border-radius: 9px;
+  background: var(--accent-s);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.popup-icon svg { width: 18px; height: 18px; fill: var(--accent); }
+.popup-title { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+.popup-body  { font-size: 13px; color: var(--ink3); line-height: 1.4; }
+.popup-close {
+  position: absolute; top: 10px; right: 12px;
+  background: none; border: none; font-size: 18px;
+  color: var(--ink3); cursor: pointer; line-height: 1; padding: 2px;
+}
+
+/* ── LOADER ──────────────────────────────────── */
+.loader {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,.4);
+  border-top-color: white; border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── RESPONSIVE ──────────────────────────────── */
+@media (max-width: 600px) {
+  .content      { padding: 20px 16px; }
+  .stats-row    { grid-template-columns: 1fr; gap: 10px; }
+  .form-grid    { grid-template-columns: 1fr; }
+  .form-grid .full { grid-column: 1; }
+  .topbar       { padding: 0 16px; }
+  .user-badge span:first-child { display: none; }
+  .auth-card    { padding: 28px 20px; }
+}
