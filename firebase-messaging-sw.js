@@ -45,7 +45,7 @@ self.addEventListener('notificationclick', (event) => {
         }
         // Nếu chưa mở thì mở tab mới — thay URL bằng Web App của bạn
         if (clients.openWindow) {
-          return clients.openWindow('https://script.google.com/macros/s/AKfycbxquzejQCD3GQYdQR7gyyT4_Fhutu9HLJZ3BkIsKVNfx2UfQMoO7PvMps3mxCufTvWASg/exec');
+          return clients.openWindow('https://vanquynhngo-cpu.github.io/firebase-sw/');
         }
       })
   );
