@@ -3,332 +3,913 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>App Thông Báo - Đăng Nhập</title>
-
+  <title>MeetSync — Hệ thống thông báo cuộc họp</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js"></script>
-
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    :root {
+      --ink:      #0f1117;
+      --ink2:     #3d4151;
+      --ink3:     #7c8399;
+      --paper:    #ffffff;
+      --surface:  #f5f6fa;
+      --border:   #e4e6ef;
+      --accent:   #2563eb;
+      --accent-h: #1d4ed8;
+      --accent-s: #eff6ff;
+      --green:    #16a34a;
+      --green-s:  #f0fdf4;
+      --red:      #dc2626;
+      --red-s:    #fef2f2;
+      --amber:    #d97706;
+      --amber-s:  #fffbeb;
+      --radius:   14px;
+      --shadow:   0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #f4f6f9;
+      font-family: 'Be Vietnam Pro', sans-serif;
+      background: var(--surface);
+      color: var(--ink);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    /* ── AUTH SCREEN ─────────────────────────── */
+    #auth-screen {
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 16px;
+      padding: 24px 16px;
+      background: linear-gradient(160deg, #f0f4ff 0%, #fafafa 60%);
     }
 
-    .card {
-      background: white;
-      border-radius: 20px;
-      padding: 32px 24px;
+    .auth-card {
+      background: var(--paper);
+      border-radius: 24px;
+      padding: 40px 36px;
       width: 100%;
-      max-width: 400px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+      max-width: 420px;
+      box-shadow: 0 8px 40px rgba(37,99,235,.10), 0 1px 4px rgba(0,0,0,.06);
+      border: 1px solid var(--border);
     }
 
-    .logo {
-      width: 60px; height: 60px;
-      background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
-      border-radius: 16px;
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+    .brand-icon {
+      width: 44px; height: 44px;
+      background: var(--accent);
+      border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 24px;
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
     }
-    .logo svg { width: 32px; height: 32px; fill: white; }
+    .brand-icon svg { width: 22px; height: 22px; fill: white; }
+    .brand-name { font-size: 20px; font-weight: 700; color: var(--ink); }
+    .brand-name span { color: var(--accent); }
 
-    h1 { font-size: 24px; font-weight: 700; color: #111; text-align: center; margin-bottom: 8px; }
-    .subtitle { font-size: 14px; color: #6b7280; text-align: center; margin-bottom: 28px; line-height: 1.5; }
-
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 8px; }
-    .form-group input {
-      width: 100%; padding: 14px 16px;
-      border: 1px solid #d1d5db; border-radius: 12px;
-      font-size: 15px; color: #111; background: #f9fafb;
-      outline: none; transition: all 0.2s;
+    .auth-tabs {
+      display: flex;
+      background: var(--surface);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 28px;
     }
-    .form-group input:focus { border-color: #4f46e5; background: #fff; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
-
-    /* Ẩn hiện phần Tên hiển thị khi chuyển tab */
-    #nameGroup {
-      display: none; /* Mặc định ẩn ở form Đăng nhập */
-      opacity: 0;
-      transition: opacity 0.3s ease;
+    .auth-tab {
+      flex: 1; padding: 9px;
+      text-align: center; font-size: 13px; font-weight: 600;
+      border-radius: 7px; cursor: pointer;
+      color: var(--ink3); transition: all .2s;
     }
-    #nameGroup.show {
-      display: block;
-      opacity: 1;
+    .auth-tab.active {
+      background: var(--paper);
+      color: var(--ink);
+      box-shadow: 0 1px 4px rgba(0,0,0,.10);
     }
 
-    .btn {
-      width: 100%; padding: 14px;
-      background: #4f46e5; color: white;
-      border: none; border-radius: 12px;
-      font-size: 16px; font-weight: 600;
-      cursor: pointer; margin-top: 10px;
-      transition: background 0.2s, opacity 0.2s;
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--ink2); margin-bottom: 7px; letter-spacing: .3px;
     }
-    .btn:hover  { background: #4338ca; }
-    .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+    .field input {
+      width: 100%; padding: 12px 14px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 14px; font-family: inherit; color: var(--ink);
+      background: var(--paper); outline: none; transition: border-color .2s;
+    }
+    .field input:focus { border-color: var(--accent); }
 
-    .switch-mode {
-      text-align: center; margin-top: 24px; font-size: 14px; color: #6b7280;
+    .btn-primary {
+      width: 100%; padding: 13px;
+      background: var(--accent); color: white;
+      border: none; border-radius: 10px;
+      font-size: 15px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: background .2s;
+      margin-top: 4px;
     }
-    .switch-mode a {
-      color: #4f46e5; font-weight: 600; text-decoration: none; margin-left: 4px; cursor: pointer;
-    }
-    .switch-mode a:hover { text-decoration: underline; }
+    .btn-primary:hover { background: var(--accent-h); }
+    .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
 
-    /* Trạng thái */
-    .status {
-      margin-top: 20px; padding: 12px 16px;
-      border-radius: 10px; font-size: 13px;
-      display: none; line-height: 1.5; text-align: center; font-weight: 500;
+    .status-msg {
+      margin-top: 16px; padding: 11px 14px;
+      border-radius: 9px; font-size: 13px; font-weight: 500;
+      display: none; line-height: 1.5;
     }
-    .status.info    { background: #eff6ff; color: #1d4ed8; display: block; }
-    .status.success { background: #f0fdf4; color: #15803d; display: block; }
-    .status.error   { background: #fef2f2; color: #dc2626; display: block; }
+    .status-msg.info    { background: var(--accent-s); color: var(--accent); display: block; }
+    .status-msg.success { background: var(--green-s);  color: var(--green);  display: block; }
+    .status-msg.error   { background: var(--red-s);    color: var(--red);    display: block; }
 
-    /* Thông báo nổi (Popup Foreground) */
+    /* ── APP SHELL ───────────────────────────── */
+    #app-screen { display: none; min-height: 100vh; flex-direction: column; }
+    #app-screen.visible { display: flex; }
+
+    /* Top bar */
+    .topbar {
+      background: var(--paper);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 10px; }
+    .topbar-logo {
+      width: 32px; height: 32px; background: var(--accent);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    }
+    .topbar-logo svg { width: 16px; height: 16px; fill: white; }
+    .topbar-title { font-size: 16px; font-weight: 700; color: var(--ink); }
+
+    .topbar-right { display: flex; align-items: center; gap: 12px; }
+    .user-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface); border-radius: 20px;
+      padding: 5px 14px 5px 8px;
+      font-size: 13px; font-weight: 500; color: var(--ink2);
+    }
+    .user-avatar {
+      width: 26px; height: 26px; border-radius: 50%;
+      background: var(--accent); display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: white;
+    }
+    .role-pill {
+      font-size: 11px; font-weight: 600; padding: 2px 8px;
+      border-radius: 20px; letter-spacing: .3px;
+    }
+    .role-pill.admin { background: #fef3c7; color: #92400e; }
+    .role-pill.user  { background: var(--accent-s); color: var(--accent); }
+
+    .btn-logout {
+      padding: 7px 14px; background: none;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 13px; font-weight: 500; font-family: inherit;
+      color: var(--ink3); cursor: pointer; transition: all .2s;
+    }
+    .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+    /* Content area */
+    .content {
+      flex: 1; padding: 28px 24px;
+      max-width: 900px; width: 100%; margin: 0 auto;
+    }
+
+    /* Page header */
+    .page-header { margin-bottom: 24px; }
+    .page-title { font-size: 22px; font-weight: 700; color: var(--ink); }
+    .page-sub   { font-size: 14px; color: var(--ink3); margin-top: 3px; }
+
+    /* ── ADMIN: STATS ROW ─────────────────────── */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 14px; margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--paper); border-radius: var(--radius);
+      padding: 20px; border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+    .stat-label { font-size: 12px; font-weight: 600; color: var(--ink3); letter-spacing: .4px; margin-bottom: 8px; }
+    .stat-value { font-size: 28px; font-weight: 700; color: var(--ink); line-height: 1; }
+    .stat-note  { font-size: 12px; color: var(--ink3); margin-top: 4px; }
+
+    /* ── PANEL (chung) ────────────────────────── */
+    .panel {
+      background: var(--paper); border-radius: var(--radius);
+      border: 1px solid var(--border); box-shadow: var(--shadow);
+      margin-bottom: 20px; overflow: hidden;
+    }
+    .panel-head {
+      padding: 18px 22px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .panel-title { font-size: 15px; font-weight: 700; color: var(--ink); }
+    .panel-sub   { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+    .panel-body  { padding: 22px; }
+
+    /* ── FORM TẠO THÔNG BÁO (ADMIN) ─────────── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-grid .full { grid-column: 1 / -1; }
+
+    .field textarea {
+      width: 100%; padding: 12px 14px;
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-size: 14px; font-family: inherit; color: var(--ink);
+      background: var(--paper); outline: none; resize: vertical;
+      min-height: 80px; transition: border-color .2s;
+    }
+    .field textarea:focus { border-color: var(--accent); }
+
+    .btn-send {
+      padding: 12px 28px;
+      background: var(--accent); color: white;
+      border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: background .2s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-send svg { width: 16px; height: 16px; fill: white; }
+    .btn-send:hover { background: var(--accent-h); }
+    .btn-send:disabled { opacity: .6; cursor: not-allowed; }
+
+    /* Result badge */
+    .send-result {
+      margin-top: 14px; padding: 12px 16px;
+      border-radius: 10px; font-size: 13px; font-weight: 500;
+      display: none;
+    }
+    .send-result.success { background: var(--green-s); color: var(--green); display: block; }
+    .send-result.error   { background: var(--red-s);   color: var(--red);   display: block; }
+
+    /* ── MEETING LIST ────────────────────────── */
+    .meeting-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .meeting-card {
+      border: 1.5px solid var(--border); border-radius: 12px;
+      padding: 18px 20px; background: var(--paper);
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .meeting-card:hover { border-color: #c7d2fe; box-shadow: 0 4px 16px rgba(37,99,235,.08); }
+
+    .meeting-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+    .meeting-title-row { flex: 1; }
+    .meeting-name { font-size: 15px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .meeting-body { font-size: 13px; color: var(--ink3); line-height: 1.5; }
+
+    .badge {
+      font-size: 11px; font-weight: 600; padding: 3px 10px;
+      border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+    }
+    .badge-active  { background: var(--green-s);  color: var(--green); }
+    .badge-expired { background: var(--surface);  color: var(--ink3); }
+    .badge-pending { background: var(--amber-s);  color: var(--amber); }
+
+    .meeting-meta {
+      display: flex; align-items: center; gap: 16px;
+      font-size: 12px; color: var(--ink3); margin-bottom: 14px; flex-wrap: wrap;
+    }
+    .meeting-meta span { display: flex; align-items: center; gap: 5px; }
+    .meeting-meta svg { width: 12px; height: 12px; fill: var(--ink3); }
+
+    /* RSVP buttons (user) */
+    .rsvp-row { display: flex; gap: 10px; }
+    .btn-yes, .btn-no {
+      flex: 1; padding: 11px;
+      border: none; border-radius: 9px;
+      font-size: 13px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: all .2s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-yes { background: var(--green-s); color: var(--green); }
+    .btn-yes:hover { background: #dcfce7; }
+    .btn-no  { background: var(--red-s);   color: var(--red);   }
+    .btn-no:hover  { background: #fee2e2; }
+    .btn-yes.chosen { background: var(--green); color: white; }
+    .btn-no.chosen  { background: var(--red);   color: white; }
+    .btn-yes:disabled, .btn-no:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* Response status row (admin) */
+    .response-summary {
+      display: flex; gap: 10px; margin-top: 12px;
+    }
+    .res-chip {
+      flex: 1; padding: 9px 12px; border-radius: 9px;
+      font-size: 12px; font-weight: 600; text-align: center;
+    }
+    .res-chip.yes { background: var(--green-s); color: var(--green); }
+    .res-chip.no  { background: var(--red-s);   color: var(--red); }
+    .res-chip.pending { background: var(--amber-s); color: var(--amber); }
+
+    /* ── EMPTY STATE ─────────────────────────── */
+    .empty {
+      padding: 48px 24px; text-align: center; color: var(--ink3);
+    }
+    .empty svg { width: 48px; height: 48px; fill: var(--border); margin-bottom: 14px; }
+    .empty p   { font-size: 14px; }
+
+    /* ── POPUP NOTIFICATION ──────────────────── */
     .popup {
-      position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-150%);
-      z-index: 9999; background: white; border-radius: 16px;
-      padding: 16px 20px; width: 90%; max-width: 360px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-      border-bottom: 4px solid #4f46e5;
-      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-      display: flex; gap: 14px; align-items: flex-start;
+      position: fixed; top: 20px; right: 20px; z-index: 9999;
+      background: var(--paper); border-radius: 16px;
+      padding: 16px 18px; max-width: 340px; width: calc(100% - 40px);
+      box-shadow: 0 12px 40px rgba(0,0,0,.15);
+      border-left: 4px solid var(--accent);
+      transform: translateX(130%);
+      transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+      display: flex; gap: 12px; align-items: flex-start;
     }
-    .popup.show { transform: translateX(-50%) translateY(0); }
+    .popup.show { transform: translateX(0); }
     .popup-icon {
-      width: 40px; height: 40px; border-radius: 12px;
-      background: #ede9fe; display: flex;
-      align-items: center; justify-content: center; flex-shrink: 0;
+      width: 36px; height: 36px; border-radius: 9px;
+      background: var(--accent-s);
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
-    .popup-icon svg { width: 20px; height: 20px; fill: #4f46e5; }
-    .popup-title { font-size: 15px; font-weight: 700; color: #111; margin-bottom: 4px; }
-    .popup-body  { font-size: 14px; color: #555; line-height: 1.4; }
+    .popup-icon svg { width: 18px; height: 18px; fill: var(--accent); }
+    .popup-title { font-size: 14px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+    .popup-body  { font-size: 13px; color: var(--ink3); line-height: 1.4; }
     .popup-close {
-      position: absolute; top: 12px; right: 12px;
-      background: none; border: none; font-size: 20px;
-      color: #9ca3af; cursor: pointer; padding: 4px;
+      position: absolute; top: 10px; right: 12px;
+      background: none; border: none; font-size: 18px; color: var(--ink3);
+      cursor: pointer; line-height: 1; padding: 2px;
+    }
+
+    /* ── LOADER ──────────────────────────────── */
+    .loader {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,.4);
+      border-top-color: white; border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── DIVIDER ─────────────────────────────── */
+    .divider {
+      height: 1px; background: var(--border); margin: 20px 0;
+    }
+
+    /* ── RESPONSIVE ──────────────────────────── */
+    @media (max-width: 600px) {
+      .content { padding: 20px 16px; }
+      .stats-row { grid-template-columns: 1fr; gap: 10px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-grid .full { grid-column: 1; }
+      .topbar { padding: 0 16px; }
+      .user-badge span:first-child { display: none; }
+      .auth-card { padding: 28px 20px; }
     }
   </style>
 </head>
 <body>
 
+<!-- ════════════════════════════════════════════
+     POPUP THÔNG BÁO (FOREGROUND)
+═════════════════════════════════════════════ -->
 <div class="popup" id="popup">
   <div class="popup-icon">
     <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V11c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
   </div>
   <div style="flex:1">
     <div class="popup-title" id="popup-title">Thông báo mới</div>
-    <div class="popup-body"  id="popup-body">Nội dung thông báo</div>
+    <div class="popup-body"  id="popup-body"></div>
   </div>
   <button class="popup-close" onclick="closePopup()">×</button>
 </div>
 
-<div class="card">
-  <div class="logo">
-    <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V11c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
-  </div>
+<!-- ════════════════════════════════════════════
+     AUTH SCREEN
+═════════════════════════════════════════════ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V11c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+      </div>
+      <div>
+        <div class="brand-name">Meet<span>Sync</span></div>
+        <div style="font-size:11px;color:var(--ink3)">Hệ thống thông báo cuộc họp</div>
+      </div>
+    </div>
 
-  <h1 id="formTitle">Đăng nhập</h1>
-  <p class="subtitle" id="formSubtitle">Vui lòng nhập thông tin để tiếp tục</p>
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tab-login" onclick="switchTab('login')">Đăng nhập</div>
+      <div class="auth-tab"        id="tab-reg"   onclick="switchTab('register')">Đăng ký</div>
+    </div>
 
-  <div class="form-group">
-    <label>Số điện thoại</label>
-    <input type="tel" id="phone" placeholder="Nhập SĐT của bạn" autocomplete="tel">
-  </div>
+    <div class="field">
+      <label>SỐ ĐIỆN THOẠI</label>
+      <input type="tel" id="auth-phone" placeholder="Nhập số điện thoại" autocomplete="tel">
+    </div>
+    <div class="field">
+      <label>MẬT KHẨU</label>
+      <input type="password" id="auth-password" placeholder="Nhập mật khẩu" autocomplete="current-password">
+    </div>
+    <div class="field" id="name-field" style="display:none">
+      <label>TÊN HIỂN THỊ</label>
+      <input type="text" id="auth-name" placeholder="Nhập tên của bạn" autocomplete="name">
+    </div>
 
-  <div class="form-group">
-    <label>Mật khẩu</label>
-    <input type="password" id="password" placeholder="Nhập mật khẩu" autocomplete="current-password">
-  </div>
-
-  <div class="form-group" id="nameGroup">
-    <label>Tên hiển thị</label>
-    <input type="text" id="displayName" placeholder="Nhập tên của bạn" autocomplete="name">
-  </div>
-
-  <button class="btn" id="submitBtn" onclick="handleSubmit()">Đăng nhập ngay</button>
-
-  <div class="status" id="status"></div>
-
-  <div class="switch-mode">
-    <span id="switchText">Chưa có tài khoản?</span>
-    <a id="switchLink" onclick="toggleMode()">Đăng ký</a>
+    <button class="btn-primary" id="auth-btn" onclick="handleAuth()">Đăng nhập</button>
+    <div class="status-msg" id="auth-status"></div>
   </div>
 </div>
 
+<!-- ════════════════════════════════════════════
+     APP SCREEN
+═════════════════════════════════════════════ -->
+<div id="app-screen">
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">
+        <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6V11c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+      </div>
+      <span class="topbar-title">MeetSync</span>
+    </div>
+    <div class="topbar-right">
+      <div class="user-badge">
+        <div class="user-avatar" id="avatar-letter">?</div>
+        <span id="user-display-name">Người dùng</span>
+        <span class="role-pill" id="role-pill">user</span>
+      </div>
+      <button class="btn-logout" onclick="logout()">Đăng xuất</button>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- ══ ADMIN VIEW ══════════════════════════ -->
+    <div id="admin-view" style="display:none">
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">TỔNG THÔNG BÁO</div>
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-note">đã tạo</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">NGƯỜI DÙNG</div>
+          <div class="stat-value" id="stat-users">—</div>
+          <div class="stat-note">thiết bị đã đăng ký</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">ĐANG HOẠT ĐỘNG</div>
+          <div class="stat-value" id="stat-active">—</div>
+          <div class="stat-note">cuộc họp trong hôm nay</div>
+        </div>
+      </div>
+
+      <!-- Form tạo thông báo -->
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Tạo thông báo cuộc họp</div>
+            <div class="panel-sub">Gửi đến tất cả thành viên đã đăng ký</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="field full">
+              <label>TIÊU ĐỀ CUỘC HỌP</label>
+              <input type="text" id="noti-title" placeholder="VD: Họp tổng kết tháng 4">
+            </div>
+            <div class="field full">
+              <label>NỘI DUNG / ĐỊA ĐIỂM</label>
+              <textarea id="noti-body" placeholder="VD: Phòng họp A, tầng 3 — Lúc 9:00 sáng&#10;Nội dung: Review tiến độ dự án Q2"></textarea>
+            </div>
+            <div class="field">
+              <label>NGÀY BẮT ĐẦU</label>
+              <input type="datetime-local" id="noti-start">
+            </div>
+            <div class="field">
+              <label>HẠN ĐĂNG KÝ (DEADLINE)</label>
+              <input type="datetime-local" id="noti-end">
+            </div>
+          </div>
+          <div style="margin-top:6px">
+            <button class="btn-send" id="send-btn" onclick="sendMeetingNotification()">
+              <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+              Gửi thông báo
+            </button>
+          </div>
+          <div class="send-result" id="send-result"></div>
+        </div>
+      </div>
+
+      <!-- Danh sách cuộc họp (admin) -->
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Danh sách cuộc họp</div>
+            <div class="panel-sub">Xem tình trạng điểm danh</div>
+          </div>
+          <button class="btn-send" style="padding:9px 16px;font-size:13px" onclick="loadMeetings()">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M17.65 6.35A7.96 7.96 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+            Tải lại
+          </button>
+        </div>
+        <div class="panel-body" style="padding:16px 22px">
+          <div class="meeting-list" id="admin-meeting-list">
+            <div class="empty">
+              <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+              <p>Chưa có cuộc họp nào. Tạo thông báo đầu tiên!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <!-- end admin-view -->
+
+    <!-- ══ USER VIEW ═══════════════════════════ -->
+    <div id="user-view" style="display:none">
+      <div class="page-header">
+        <div class="page-title">Cuộc họp của tôi</div>
+        <div class="page-sub">Xác nhận tham gia hoặc vắng mặt trước hạn chót</div>
+      </div>
+
+      <div class="meeting-list" id="user-meeting-list">
+        <div class="empty">
+          <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+          <p>Không có cuộc họp nào đang chờ xác nhận.</p>
+        </div>
+      </div>
+    </div>
+    <!-- end user-view -->
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     JAVASCRIPT
+═════════════════════════════════════════════ -->
 <script>
-// =============================================
-// CẤU HÌNH & TRẠNG THÁI UI
-// =============================================
-let isLoginMode = true; // Mặc định là màn hình Đăng nhập
+// ─── CONFIG ─────────────────────────────────
+const GAS_URL  = "https://script.google.com/macros/s/AKfycbxs8g3kHvnUzRuchPHqk0DwGMEiOvGh3xQbp44ErZf2Cc1NX0NJgZJOUyY_I7p0fM1upg/exec";
+const VAPID    = "BNL5Qb8_WQlsWgsbgzWY8iSpPMHmWFoUklwF9r2dk6dZkf6rfj6C1bUkO-6n11EGxGilAjYh-sjsZw_WCpJvC4k";
+const SW_URL   = "./firebase-messaging-sw.js";
 
-// API URL (Lấy từ Google Apps Script của bạn)
-const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxs8g3kHvnUzRuchPHqk0DwGMEiOvGh3xQbp44ErZf2Cc1NX0NJgZJOUyY_I7p0fM1upg/exec";
-
-// Firebase Config
-const firebaseConfig = {
+const FB_CFG = {
   apiKey:            "AIzaSyCv_sjgaGsGsRgthyXGmE-eztH93RJlXUE",
   authDomain:        "thongbaocuochop-da595.firebaseapp.com",
   projectId:         "thongbaocuochop-da595",
   messagingSenderId: "361920499933",
   appId:             "1:361920499933:web:c994f744e2d64f0c6acb34"
 };
-const VAPID_KEY = "BNL5Qb8_WQlsWgsbgzWY8iSpPMHmWFoUklwF9r2dk6dZkf6rfj6C1bUkO-6n11EGxGilAjYh-sjsZw_WCpJvC4k";
-const SW_URL = "./firebase-messaging-sw.js";
 
-// Khởi tạo Firebase
-firebase.initializeApp(firebaseConfig);
-const messaging = firebase.messaging();
+// ─── STATE ──────────────────────────────────
+let currentUser = null;
+let fcmToken    = null;
+let isLogin     = true;
+let messaging   = null;
 
-// =============================================
-// CHUYỂN ĐỔI UI (ĐĂNG NHẬP <-> ĐĂNG KÝ)
-// =============================================
-function toggleMode() {
-  isLoginMode = !isLoginMode;
-  const nameGroup = document.getElementById("nameGroup");
-  
-  if (isLoginMode) {
-    nameGroup.classList.remove("show");
-    document.getElementById("formTitle").textContent = "Đăng nhập";
-    document.getElementById("submitBtn").textContent = "Đăng nhập ngay";
-    document.getElementById("switchText").textContent = "Chưa có tài khoản?";
-    document.getElementById("switchLink").textContent = "Đăng ký";
-  } else {
-    nameGroup.classList.add("show");
-    document.getElementById("formTitle").textContent = "Đăng ký tài khoản";
-    document.getElementById("submitBtn").textContent = "Tạo tài khoản";
-    document.getElementById("switchText").textContent = "Đã có tài khoản?";
-    document.getElementById("switchLink").textContent = "Đăng nhập";
-  }
-  
-  // Xóa thông báo lỗi cũ nếu có
-  document.getElementById("status").style.display = "none";
+// ─── FIREBASE INIT ──────────────────────────
+firebase.initializeApp(FB_CFG);
+messaging = firebase.messaging();
+
+messaging.onMessage(payload => {
+  const { title, body } = payload.notification;
+  showPopup(title, body);
+  // Nếu user đang xem → reload list
+  if (currentUser) loadMeetings();
+});
+
+// ─── AUTH TABS ──────────────────────────────
+function switchTab(mode) {
+  isLogin = (mode === 'login');
+  document.getElementById('tab-login').classList.toggle('active', isLogin);
+  document.getElementById('tab-reg').classList.toggle('active', !isLogin);
+  document.getElementById('name-field').style.display = isLogin ? 'none' : 'block';
+  document.getElementById('auth-btn').textContent     = isLogin ? 'Đăng nhập' : 'Tạo tài khoản';
+  document.getElementById('auth-status').style.display = 'none';
 }
 
-// =============================================
-// XỬ LÝ GỬI FORM (ĐĂNG NHẬP / ĐĂNG KÝ)
-// =============================================
-async function handleSubmit() {
-  const phone = document.getElementById("phone").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const displayName = document.getElementById("displayName").value.trim();
+// ─── HANDLE AUTH ────────────────────────────
+async function handleAuth() {
+  const phone    = document.getElementById('auth-phone').value.trim();
+  const password = document.getElementById('auth-password').value.trim();
+  const name     = document.getElementById('auth-name').value.trim();
 
-  // Validate Form
-  if (!phone || !password) {
-    showStatus("Vui lòng nhập SĐT và Mật khẩu!", "error");
-    return;
-  }
-  if (!isLoginMode && !displayName) {
-    showStatus("Vui lòng nhập Tên hiển thị để đăng ký!", "error");
-    return;
-  }
+  if (!phone || !password) return showAuthStatus('Vui lòng nhập SĐT và mật khẩu!', 'error');
+  if (!isLogin && !name)    return showAuthStatus('Vui lòng nhập tên hiển thị!', 'error');
 
-  const btn = document.getElementById("submitBtn");
+  const btn = document.getElementById('auth-btn');
   btn.disabled = true;
-  btn.textContent = "Đang kết nối...";
+  btn.innerHTML = '<span class="loader"></span>';
 
   try {
-    // 1. Cấp quyền nhận thông báo
-    showStatus("Đang thiết lập thiết bị...", "info");
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      throw new Error("Bạn đã từ chối nhận thông báo. Vui lòng bật lại trong cài đặt.");
-    }
+    showAuthStatus('Đang thiết lập thiết bị...', 'info');
 
-    // 2. Đăng ký Service Worker
+    // Xin quyền & lấy FCM token
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') throw new Error('Vui lòng cho phép nhận thông báo để sử dụng ứng dụng.');
+
     const swReg = await navigator.serviceWorker.register(SW_URL);
     await navigator.serviceWorker.ready;
 
-    // 3. Lấy FCM Token từ Firebase
-    const token = await messaging.getToken({
-      vapidKey: VAPID_KEY,
-      serviceWorkerRegistration: swReg
-    });
+    fcmToken = await messaging.getToken({ vapidKey: VAPID, serviceWorkerRegistration: swReg });
+    if (!fcmToken) throw new Error('Không lấy được mã thiết bị. Thử lại sau.');
 
-    if (!token) throw new Error("Không thể tạo mã thiết bị. Thử lại sau.");
+    showAuthStatus('Đang xác thực...', 'info');
 
-    // 4. Gửi dữ liệu lên Google Sheet (Backend)
-    showStatus("Đang xử lý dữ liệu...", "info");
-    
-    const payload = {
-      // Đổi action tùy thuộc vào việc đang ở form Đăng nhập hay Đăng ký
-      action: isLoginMode ? "login" : "saveToken", 
-      phone: phone,
-      password: password,
-      displayName: isLoginMode ? "" : displayName,
-      token: token
-    };
+    // Gọi API
+    const payload = isLogin
+      ? { action: 'login',     phone, password, token: fcmToken }
+      : { action: 'saveToken', phone, password, displayName: name, token: fcmToken };
 
-    const response = await fetch(GAS_API_URL, {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
+    const res    = await gasPost(payload);
+    if (!res.success) throw new Error(res.error || 'Xác thực thất bại.');
 
-    const result = await response.json();
+    // Lưu session
+    currentUser = isLogin ? res.user : { displayName: name, rule: 'user', userId: res.userId };
+    currentUser.fcmToken = fcmToken;
+    sessionStorage.setItem('user', JSON.stringify(currentUser));
 
-    // Hoàn tất
-    if (result.success) {
-      const msgText = isLoginMode ? "✅ Đăng nhập thành công!" : "✅ Tạo tài khoản thành công!";
-      showStatus(msgText + " Thiết bị đã sẵn sàng nhận thông báo.", "success");
-      btn.textContent = isLoginMode ? "Đã đăng nhập" : "Đã đăng ký";
-      
-      // Popup Test
-      setTimeout(() => {
-        showPopup("Hệ thống", "Chào mừng bạn, cấu hình thông báo đã hoàn tất!");
-      }, 1500);
-    } else {
-      throw new Error(result.error || "Có lỗi xảy ra từ máy chủ.");
-    }
+    showApp();
 
   } catch (err) {
-    console.error(err);
-    showStatus(err.message, "error");
+    showAuthStatus(err.message, 'error');
     btn.disabled = false;
-    btn.textContent = isLoginMode ? "Đăng nhập ngay" : "Tạo tài khoản";
+    btn.textContent = isLogin ? 'Đăng nhập' : 'Tạo tài khoản';
   }
 }
 
-// =============================================
-// XỬ LÝ THÔNG BÁO FOREGROUND
-// =============================================
-messaging.onMessage((payload) => {
-  const { title, body } = payload.notification;
-  showPopup(title, body);
-});
+// ─── SHOW APP ───────────────────────────────
+function showApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  const app = document.getElementById('app-screen');
+  app.classList.add('visible');
 
-// Hiển thị Popup góc trên
+  const isAdmin = currentUser.rule === 'admin';
+
+  // Topbar
+  const dname = currentUser.displayName || 'Người dùng';
+  document.getElementById('user-display-name').textContent = dname;
+  document.getElementById('avatar-letter').textContent     = dname.charAt(0).toUpperCase();
+  const pill = document.getElementById('role-pill');
+  pill.textContent  = isAdmin ? 'Admin' : 'User';
+  pill.className    = 'role-pill ' + (isAdmin ? 'admin' : 'user');
+
+  if (isAdmin) {
+    document.getElementById('admin-view').style.display = 'block';
+    document.getElementById('user-view').style.display  = 'none';
+    loadAdminStats();
+    loadMeetings();
+  } else {
+    document.getElementById('admin-view').style.display = 'none';
+    document.getElementById('user-view').style.display  = 'block';
+    loadMeetings();
+  }
+}
+
+// ─── LOGOUT ─────────────────────────────────
+function logout() {
+  currentUser = null; fcmToken = null;
+  sessionStorage.removeItem('user');
+  document.getElementById('app-screen').classList.remove('visible');
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('auth-status').style.display = 'none';
+  document.getElementById('auth-btn').disabled  = false;
+  document.getElementById('auth-btn').textContent = 'Đăng nhập';
+}
+
+// ─── SEND MEETING NOTIFICATION (ADMIN) ──────
+async function sendMeetingNotification() {
+  const title = document.getElementById('noti-title').value.trim();
+  const body  = document.getElementById('noti-body').value.trim();
+  const start = document.getElementById('noti-start').value;
+  const end   = document.getElementById('noti-end').value;
+
+  if (!title || !body) return showSendResult('Vui lòng nhập tiêu đề và nội dung!', 'error');
+  if (!start || !end)  return showSendResult('Vui lòng chọn thời gian bắt đầu và deadline!', 'error');
+  if (new Date(end) <= new Date(start)) return showSendResult('Hạn đăng ký phải sau ngày bắt đầu!', 'error');
+
+  const btn = document.getElementById('send-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loader"></span> Đang gửi...';
+
+  try {
+    const res = await gasPost({
+      action: 'createMeetingNotification',
+      title, body,
+      startDate: start,
+      endDate:   end
+    });
+
+    if (res.success) {
+      showSendResult('✅ ' + res.message, 'success');
+      // Reset form
+      ['noti-title','noti-body','noti-start','noti-end'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      loadMeetings();
+      loadAdminStats();
+    } else {
+      throw new Error(res.error || 'Gửi thất bại.');
+    }
+  } catch(err) {
+    showSendResult('❌ ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg> Gửi thông báo';
+  }
+}
+
+// ─── LOAD MEETINGS ───────────────────────────
+async function loadMeetings() {
+  const isAdmin = currentUser && currentUser.rule === 'admin';
+  const listId  = isAdmin ? 'admin-meeting-list' : 'user-meeting-list';
+  const el      = document.getElementById(listId);
+  el.innerHTML  = '<div style="padding:24px;text-align:center;color:var(--ink3);font-size:13px">Đang tải...</div>';
+
+  try {
+    const res = await gasGet({ action: 'getMeetings' });
+    if (!res || !res.meetings || res.meetings.length === 0) {
+      el.innerHTML = `<div class="empty">
+        <svg viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+        <p>Chưa có cuộc họp nào.</p></div>`;
+      return;
+    }
+    el.innerHTML = '';
+    res.meetings.forEach(m => {
+      el.appendChild(isAdmin ? buildAdminCard(m) : buildUserCard(m));
+    });
+  } catch(err) {
+    el.innerHTML = `<div class="empty"><p style="color:var(--red)">Lỗi: ${err.message}</p></div>`;
+  }
+}
+
+// ─── BUILD ADMIN CARD ────────────────────────
+function buildAdminCard(m) {
+  const div = document.createElement('div');
+  div.className = 'meeting-card';
+  const now     = new Date();
+  const endDate = m.endDate ? new Date(m.endDate) : null;
+  const expired = endDate && now > endDate;
+
+  div.innerHTML = `
+    <div class="meeting-header">
+      <div class="meeting-title-row">
+        <div class="meeting-name">${escHtml(m.title)}</div>
+        <div class="meeting-body">${escHtml(m.body)}</div>
+      </div>
+      <span class="badge ${expired ? 'badge-expired' : 'badge-active'}">${expired ? 'Đã kết thúc' : 'Đang mở'}</span>
+    </div>
+    <div class="meeting-meta">
+      ${m.startDate ? `<span><svg viewBox="0 0 24 24"><path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg>${fmtDate(m.startDate)}</span>` : ''}
+      ${m.endDate ? `<span><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>Hạn: ${fmtDate(m.endDate)}</span>` : ''}
+      <span><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>ID: ${m.id}</span>
+    </div>
+    <div class="response-summary">
+      <div class="res-chip yes">✅ Tham gia: ${m.yesCount || 0}</div>
+      <div class="res-chip no">❌ Vắng mặt: ${m.noCount || 0}</div>
+      <div class="res-chip pending">⏳ Chưa trả lời: ${m.pendingCount || '?'}</div>
+    </div>`;
+  return div;
+}
+
+// ─── BUILD USER CARD ─────────────────────────
+function buildUserCard(m) {
+  const div = document.createElement('div');
+  div.className = 'meeting-card';
+  const now     = new Date();
+  const endDate = m.endDate ? new Date(m.endDate) : null;
+  const expired = endDate && now > endDate;
+
+  div.innerHTML = `
+    <div class="meeting-header">
+      <div class="meeting-title-row">
+        <div class="meeting-name">${escHtml(m.title)}</div>
+        <div class="meeting-body">${escHtml(m.body)}</div>
+      </div>
+      <span class="badge ${expired ? 'badge-expired' : 'badge-active'}">${expired ? 'Đã kết thúc' : 'Đang mở'}</span>
+    </div>
+    <div class="meeting-meta">
+      ${m.startDate ? `<span><svg viewBox="0 0 24 24"><path d="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"/></svg>${fmtDate(m.startDate)}</span>` : ''}
+      ${m.endDate   ? `<span><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>Hạn: ${fmtDate(m.endDate)}</span>` : ''}
+    </div>
+    <div class="rsvp-row" id="rsvp-${m.id}">
+      <button class="btn-yes ${m.myResponse==='Tham gia'?'chosen':''}" 
+              onclick="submitRSVP('${m.id}','Tham gia',this)" 
+              ${expired || m.myResponse ? 'disabled' : ''}>
+        ✅ Tham gia
+      </button>
+      <button class="btn-no  ${m.myResponse==='Không tham gia'?'chosen':''}" 
+              onclick="submitRSVP('${m.id}','Không tham gia',this)" 
+              ${expired || m.myResponse ? 'disabled' : ''}>
+        ❌ Vắng mặt
+      </button>
+    </div>
+    ${m.myResponse ? `<div style="font-size:12px;color:var(--ink3);margin-top:8px">Bạn đã trả lời: <b>${m.myResponse}</b></div>` : ''}`;
+  return div;
+}
+
+// ─── SUBMIT RSVP (USER) ──────────────────────
+async function submitRSVP(notificationId, response, btnEl) {
+  const row = btnEl.closest('.rsvp-row');
+  row.querySelectorAll('button').forEach(b => b.disabled = true);
+
+  try {
+    const res = await gasPost({
+      action: 'submitResponse',
+      notificationId,
+      response,
+      token: currentUser.fcmToken || fcmToken
+    });
+
+    if (res.success) {
+      // Mark nút đã chọn
+      row.querySelectorAll('button').forEach(b => b.classList.remove('chosen'));
+      btnEl.classList.add('chosen');
+      // Thêm note bên dưới
+      const note = document.createElement('div');
+      note.style.cssText = 'font-size:12px;color:var(--ink3);margin-top:8px';
+      note.innerHTML = `Bạn đã trả lời: <b>${response}</b>`;
+      row.after(note);
+      showPopup('Đã ghi nhận!', 'Phản hồi của bạn: ' + response);
+    } else {
+      alert(res.error || 'Có lỗi khi gửi phản hồi.');
+      row.querySelectorAll('button').forEach(b => b.disabled = false);
+    }
+  } catch(err) {
+    alert(err.message);
+    row.querySelectorAll('button').forEach(b => b.disabled = false);
+  }
+}
+
+// ─── LOAD ADMIN STATS ────────────────────────
+async function loadAdminStats() {
+  try {
+    const res = await gasGet({ action: 'getStats' });
+    if (res) {
+      document.getElementById('stat-total').textContent  = res.totalNotifications ?? '—';
+      document.getElementById('stat-users').textContent  = res.totalUsers ?? '—';
+      document.getElementById('stat-active').textContent = res.activeToday ?? '—';
+    }
+  } catch(e) { /* silent */ }
+}
+
+// ─── HELPERS ─────────────────────────────────
+async function gasPost(payload) {
+  const r = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
+  return r.json();
+}
+
+async function gasGet(params) {
+  const qs  = new URLSearchParams(params).toString();
+  const r   = await fetch(GAS_URL + '?' + qs);
+  return r.json();
+}
+
+function fmtDate(str) {
+  if (!str) return '';
+  const d = new Date(str);
+  return d.toLocaleString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function escHtml(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function showAuthStatus(msg, type) {
+  const el = document.getElementById('auth-status');
+  el.textContent = msg; el.className = 'status-msg ' + type;
+}
+
+function showSendResult(msg, type) {
+  const el = document.getElementById('send-result');
+  el.textContent = msg; el.className = 'send-result ' + type;
+  setTimeout(() => el.style.display = 'none', 6000);
+}
+
 function showPopup(title, body) {
-  document.getElementById("popup-title").textContent = title;
-  document.getElementById("popup-body").textContent  = body;
-  
-  const popup = document.getElementById("popup");
-  popup.classList.add("show");
-  setTimeout(() => closePopup(), 5000);
+  document.getElementById('popup-title').textContent = title;
+  document.getElementById('popup-body').textContent  = body;
+  const p = document.getElementById('popup');
+  p.classList.add('show');
+  setTimeout(() => p.classList.remove('show'), 5000);
 }
+function closePopup() { document.getElementById('popup').classList.remove('show'); }
 
-function closePopup() {
-  document.getElementById("popup").classList.remove("show");
-}
-
-function showStatus(msg, type) {
-  const el = document.getElementById("status");
-  el.textContent  = msg;
-  el.className    = "status " + type;
-}
-
-// Kiểm tra trình duyệt
+// ─── AUTO RESTORE SESSION ───────────────────
 window.onload = () => {
-  if (!("Notification" in window) || !("serviceWorker" in navigator)) {
-    showStatus("Trình duyệt không hỗ trợ tính năng này.", "error");
-    document.getElementById("submitBtn").disabled = true;
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+    showAuthStatus('Trình duyệt không hỗ trợ. Dùng Chrome hoặc Edge.', 'error');
+    document.getElementById('auth-btn').disabled = true;
+  }
+  const saved = sessionStorage.getItem('user');
+  if (saved) {
+    try { currentUser = JSON.parse(saved); showApp(); } catch(e) { sessionStorage.removeItem('user'); }
   }
 };
 </script>
