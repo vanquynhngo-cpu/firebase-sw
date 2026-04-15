@@ -3,7 +3,7 @@ importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-comp
 
 firebase.initializeApp({
   apiKey:            "AIzaSyAx-a9RjUY_l3SXI-0APMj4a9aRyDGZYQQ",           // từ firebaseConfig
-  authDomain:        "AIzaSyAx-a9RjUY_l3SXI-0APMj4a9aRyDGZYQQ",
+  authDomain:        "thongbaocuochop.firebaseapp.com",
   projectId:         "thongbaocuochop",
   messagingSenderId: "241732431165",
   appId:             "1:241732431165:web:2e16e5ffeb2de9d536e954"
