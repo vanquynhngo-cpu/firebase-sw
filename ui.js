@@ -135,7 +135,7 @@ const UI = (() => {
     const div     = document.createElement('div');
     div.className = 'meeting-card';
     const expired = m.endDate && new Date() > new Date(m.endDate);
-    
+    const btnDisabled = expired || m.myResponse ? 'disabled' : '';
 
     div.innerHTML = `
       <div class="meeting-header">
@@ -146,31 +146,18 @@ const UI = (() => {
         ${_statusBadge(m.endDate)}
       </div>
       ${_metaRow(m)}
-      ${m.myResponse
-  ? `
-    <div style="
-      margin-top:10px;
-      padding:10px 12px;
-      border-radius:8px;
-      background: var(--accent-s);
-      color: var(--accent);
-      font-size:13px;
-      font-weight:500;
-    ">
-      ✅ Bạn đã tham gia bình chọn: <b>${Utils.escHtml(m.myResponse)}</b>
-    </div>
-  `
-  : `
     <div class="rsvp-row" id="rsvp-${m.id}">
-      <button class="btn-yes" data-response="Tham gia" ${expired ? 'disabled' : ''}>
-        ✅ Tham gia
-      </button>
-      <button class="btn-no" data-response="Không tham gia" ${expired ? 'disabled' : ''}>
-        ❌ Vắng mặt
-      </button>
+          <button class="btn-yes ${m.myResponse === 'Tham gia' ? 'chosen' : ''}" data-response="Tham gia" ${btnDisabled}>
+            ✅ Tham gia
+          </button>
+          <button class="btn-no ${m.myResponse === 'Không tham gia' ? 'chosen' : ''}" data-response="Không tham gia" ${btnDisabled}>
+            ❌ Vắng mặt
+          </button>
     </div>
-  `
-}
+    
+    ${m.myResponse
+      ? `<div style="font-size:12px;color:var(--ink3);margin-top:8px">Bạn đã trả lời: <b>${Utils.escHtml(m.myResponse)}</b></div>`
+      : ''}
 
     // Bind RSVP click
     div.querySelectorAll('.rsvp-row button').forEach(btn => {
