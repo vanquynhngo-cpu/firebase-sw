@@ -277,8 +277,12 @@ body {
 /* Admin response chips */
 .response-summary { display: flex; gap: 10px; margin-top: 12px; }
 .res-chip {
+  cursor: pointer;
   flex: 1; padding: 9px 12px; border-radius: 9px;
   font-size: 12px; font-weight: 600; text-align: center;
+}
+.res-chip:hover {
+  transform: scale(1.05);
 }
 .res-chip.yes     { background: var(--green-s); color: var(--green); }
 .res-chip.no      { background: var(--red-s);   color: var(--red); }
