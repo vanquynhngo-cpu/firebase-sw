@@ -1,11 +1,3 @@
-/**
- * meetings.js
- * ─────────────────────────────────────────────
- * Quản lý toàn bộ chức năng cuộc họp:
- *   - Admin: tạo, load, thống kê
- *   - User: xem + RSVP
- */
-
 const Meetings = (() => {
 
   // ─────────────────────────────
@@ -19,9 +11,7 @@ const Meetings = (() => {
       document.getElementById('stat-total').textContent  = res.totalNotifications ?? '—';
       document.getElementById('stat-users').textContent  = res.totalUsers ?? '—';
       document.getElementById('stat-active').textContent = res.activeToday ?? '—';
-    } catch {
-      // không critical
-    }
+    } catch {}
   }
 
   // ─────────────────────────────
@@ -62,7 +52,7 @@ const Meetings = (() => {
       if (res.success) {
         UI.showSendResult('✅ ' + res.message, 'success');
         _resetForm();
-        loadMeetings();
+        await loadMeetings(); // reload ngay
         loadAdminStats();
       } else {
         throw new Error(res.error || 'Gửi thất bại');
@@ -81,7 +71,7 @@ const Meetings = (() => {
   }
 
   // ─────────────────────────────
-  // LOAD MEETINGS (CẢ ADMIN & USER)
+  // LOAD MEETINGS
   // ─────────────────────────────
   async function loadMeetings() {
     const user    = App.getCurrentUser();
@@ -95,11 +85,9 @@ const Meetings = (() => {
     try {
       const res = await Api.getMeetings(user?.fcmToken);
 
-      if (!res || !res.meetings || res.meetings.length === 0) {
+      if (!res?.meetings?.length) {
         el.innerHTML = UI.emptyState(
-          isAdmin
-            ? 'Chưa có cuộc họp nào.'
-            : 'Không có cuộc họp cần phản hồi.'
+          isAdmin ? 'Chưa có cuộc họp nào.' : 'Không có cuộc họp cần phản hồi.'
         );
         return;
       }
@@ -120,7 +108,7 @@ const Meetings = (() => {
   }
 
   // ─────────────────────────────
-  // ADMIN CARD (CÓ %)
+  // ADMIN CARD
   // ─────────────────────────────
   function _buildAdminCard(m) {
     const div = document.createElement('div');
@@ -155,7 +143,7 @@ const Meetings = (() => {
       </div>
 
       <div style="margin-top:10px;font-size:12px;color:#555">
-        % tham gia: <b>${m.percentYes}%</b>
+        % tham gia: <b>${m.percentYes ?? 0}%</b>
       </div>
     `;
 
@@ -167,6 +155,7 @@ const Meetings = (() => {
   // ─────────────────────────────
   async function _handleRSVP(meetingId, response, btnEl) {
     const row = btnEl.closest('.rsvp-row');
+
     row.querySelectorAll('button').forEach(b => b.disabled = true);
 
     try {
@@ -178,12 +167,14 @@ const Meetings = (() => {
         user.fcmToken
       );
 
-      if (res.success) {
-        UI.markRSVPChosen(meetingId, response);
-        UI.showPopup('Đã ghi nhận', 'Bạn chọn: ' + response);
-      } else {
+      if (!res.success) {
         throw new Error(res.error || 'Lỗi gửi phản hồi');
       }
+
+      UI.showPopup('Đã ghi nhận', 'Bạn chọn: ' + response);
+
+      // 🔥 QUAN TRỌNG: reload lại list để cập nhật myResponse
+      await loadMeetings();
 
     } catch (err) {
       alert(err.message);
