@@ -2,10 +2,10 @@
  * auth.js
  * ─────────────────────────────────────────────
  * Quản lý toàn bộ luồng xác thực:
- *   - Chuyển tab Login / Register
- *   - Xin quyền thông báo & lấy FCM token
- *   - Gọi API đăng nhập / đăng ký
- *   - Lưu/xóa session
+ * - Chuyển tab Login / Register
+ * - Xin quyền thông báo & lấy FCM token
+ * - Gọi API đăng nhập / đăng ký
+ * - Lưu/xóa session
  *
  * Phụ thuộc: CONFIG, Api, Utils, UI, App (callback)
  */
@@ -77,6 +77,14 @@ const Auth = (() => {
       if (_isLogin) {
         const res = await Api.login(phone, password, fcmToken);
         if (!res.success) throw new Error(res.error || 'Xác thực thất bại.');
+        
+        // ==========================================
+        // LƯU SESSION TOKEN TỪ API XUỐNG LOCALSTORAGE
+        // ==========================================
+        if (res.sessionToken) {
+            localStorage.setItem('sessionToken', res.sessionToken);
+        }
+
         user = res.user;
       } else {
         const res = await Api.register(phone, password, name, fcmToken);
@@ -100,6 +108,12 @@ const Auth = (() => {
 
   function logout() {
     Utils.clearSession('user');
+    
+    // ==========================================
+    // XÓA SESSION TOKEN KHI ĐĂNG XUẤT
+    // ==========================================
+    localStorage.removeItem('sessionToken');
+
     // Reset form
     document.getElementById('auth-phone').value    = '';
     document.getElementById('auth-password').value = '';
@@ -116,7 +130,10 @@ const Auth = (() => {
 
   function restoreSession() {
     const saved = Utils.loadSession('user');
-    if (saved) {
+    const sessionToken = localStorage.getItem('sessionToken'); // Có thể dùng để check thêm nếu cần
+    
+    // Chỉ phục hồi khi có cả thông tin user (để hiển thị) và có sessionToken (để gọi API)
+    if (saved && sessionToken) {
       App.onLoginSuccess(saved);
       return true;
     }
