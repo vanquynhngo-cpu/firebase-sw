@@ -153,6 +153,28 @@ const UI = (() => {
     return div;
   }
 
+  function showUserModal(title, users) {
+  const modal = document.getElementById('user-modal');
+  const titleEl = document.getElementById('modal-title');
+  const content = document.getElementById('modal-content');
+
+  titleEl.textContent = title;
+
+  if (!users || users.length === 0) {
+    content.innerHTML = `<div style="color:#888">Không có dữ liệu</div>`;
+  } else {
+    content.innerHTML = users.map(u =>
+      `<div class="modal-user">• ${Utils.escHtml(u)}</div>`
+    ).join('');
+  }
+
+  modal.classList.add('show');
+}
+
+function closeUserModal() {
+  document.getElementById('user-modal').classList.remove('show');
+}
+
   return {
     showPopup,
     closePopup,
@@ -163,7 +185,9 @@ const UI = (() => {
     emptyState,
     loadingState,
     buildAdminCard,
-    buildUserCard
+    buildUserCard,
+    showUserModal,
+    closeUserModal
   };
 
 })();
