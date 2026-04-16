@@ -57,7 +57,7 @@ self.addEventListener('notificationclick', (event) => {
     const responseValue = (action === 'yes') ? 'Tham gia' : 'Không tham gia';
     
     // URL API của Google Apps Script của bạn
-    const gasApiUrl = "https://script.google.com/macros/s/AKfycbxjI8JdFGRu7jy6zzPzMvDjV7yntUpN6898gnIWHfo6LwOTCZEd7RoykR6HEGj5c7h92Q/exec";
+    const gasApiUrl = "https://script.google.com/macros/s/AKfycbxXBrJvS-NH1qIokROxP83EuAN-SPkv60ti25IMMkzYXgf-Hh371F2mgrYYyXGezTS8zw/exec";
 
     event.waitUntil(
       fetch(gasApiUrl, {
