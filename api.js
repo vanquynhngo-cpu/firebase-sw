@@ -56,8 +56,8 @@ const Api = (() => {
    * Lấy danh sách tất cả cuộc họp
    * @returns {Promise<{meetings: Array}>}
    */
-  async function getMeetings() {
-    return _get({ action: 'getMeetings' });
+  async function getMeetings(token) {
+    return _get({ action: 'getMeetings', token });
   }
 
   /**
