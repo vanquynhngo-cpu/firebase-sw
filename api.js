@@ -31,8 +31,8 @@ const Api = (() => {
    * Đăng nhập tài khoản
    * @param {string} phone
    * @param {string} password
-   * @param {string} token - FCM token
-   * @returns {Promise<{success, user?, error?}>}
+   * @param {string} token - FCM token (để nhận Push)
+   * @returns {Promise<{success, user?, sessionToken?, error?}>}
    */
   async function login(phone, password, token) {
     return _post({ action: 'login', phone, password, token });
@@ -50,14 +50,17 @@ const Api = (() => {
     return _post({ action: 'saveToken', phone, password, displayName, token });
   }
 
-  // ── MEETINGS ─────────────────────────────────
+  // ── MEETINGS (CẦN SESSION TOKEN) ──────────────
 
   /**
    * Lấy danh sách tất cả cuộc họp
    * @returns {Promise<{meetings: Array}>}
    */
-  async function getMeetings(token) {
-    return _get({ action: 'getMeetings', token });
+  async function getMeetings() {
+    return _get({ 
+      action: 'getMeetings',
+      sessionToken: localStorage.getItem('sessionToken')
+    });
   }
 
   /**
@@ -66,28 +69,42 @@ const Api = (() => {
    * @returns {Promise<{success, message?, error?}>}
    */
   async function createMeeting({ title, body, startDate, endDate }) {
-    return _post({ action: 'createMeetingNotification', title, body, startDate, endDate });
+    return _post({ 
+      action: 'createMeetingNotification', 
+      title, 
+      body, 
+      startDate, 
+      endDate,
+      sessionToken: localStorage.getItem('sessionToken')
+    });
   }
 
   /**
    * Gửi phản hồi tham gia / vắng mặt (User)
    * @param {string} notificationId
    * @param {string} response - 'Tham gia' | 'Không tham gia'
-   * @param {string} token - FCM token của user
    * @returns {Promise<{success, error?}>}
    */
-  async function submitRSVP(notificationId, response, token) {
-    return _post({ action: 'submitResponse', notificationId, response, token });
+  async function submitRSVP(notificationId, response) {
+    return _post({ 
+      action: 'submitResponse', 
+      notificationId, 
+      response,
+      sessionToken: localStorage.getItem('sessionToken')
+    });
   }
 
-  // ── STATS (Admin) ─────────────────────────────
+  // ── STATS (CẦN SESSION TOKEN - Admin) ─────────
 
   /**
    * Lấy thống kê tổng quan (Admin)
    * @returns {Promise<{totalNotifications, totalUsers, activeToday}>}
    */
   async function getStats() {
-    return _get({ action: 'getStats' });
+    return _get({ 
+      action: 'getStats',
+      sessionToken: localStorage.getItem('sessionToken')
+    });
   }
 
   return { login, register, getMeetings, createMeeting, submitRSVP, getStats };
