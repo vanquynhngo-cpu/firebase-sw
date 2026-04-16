@@ -1,61 +1,73 @@
 /**
  * meetings.js
  * ─────────────────────────────────────────────
- * Quản lý toàn bộ chức năng liên quan đến cuộc họp:
- *   - Admin: tạo thông báo, load danh sách, xem thống kê
- *   - User: load danh sách, gửi RSVP
- *
- * Phụ thuộc: Api, UI, Utils, App (cho currentUser)
+ * Quản lý toàn bộ chức năng cuộc họp:
+ *   - Admin: tạo, load, thống kê
+ *   - User: xem + RSVP
  */
 
 const Meetings = (() => {
 
-  // ── ADMIN: LOAD STATS ────────────────────────
-
+  // ─────────────────────────────
+  // ADMIN: LOAD STATS
+  // ─────────────────────────────
   async function loadAdminStats() {
     try {
       const res = await Api.getStats();
       if (!res) return;
+
       document.getElementById('stat-total').textContent  = res.totalNotifications ?? '—';
       document.getElementById('stat-users').textContent  = res.totalUsers ?? '—';
       document.getElementById('stat-active').textContent = res.activeToday ?? '—';
     } catch {
-      // silent — stats không critical
+      // không critical
     }
   }
 
-  // ── ADMIN: CREATE MEETING ────────────────────
-
+  // ─────────────────────────────
+  // ADMIN: CREATE MEETING
+  // ─────────────────────────────
   async function createMeeting() {
     const title = document.getElementById('noti-title').value.trim();
     const body  = document.getElementById('noti-body').value.trim();
     const start = document.getElementById('noti-start').value;
     const end   = document.getElementById('noti-end').value;
 
-    // Validate
     if (!title || !body) {
       return UI.showSendResult('Vui lòng nhập tiêu đề và nội dung!', 'error');
     }
+
     if (!start || !end) {
-      return UI.showSendResult('Vui lòng chọn thời gian bắt đầu và deadline!', 'error');
+      return UI.showSendResult('Vui lòng chọn thời gian!', 'error');
     }
+
     if (new Date(end) <= new Date(start)) {
-      return UI.showSendResult('Hạn đăng ký phải sau ngày bắt đầu!', 'error');
+      return UI.showSendResult('Deadline phải sau ngày bắt đầu!', 'error');
     }
 
     const btn = document.getElementById('send-btn');
     UI.btnLoading(btn, 'Đang gửi...');
 
     try {
-      const res = await Api.createMeeting({ title, body, startDate: start, endDate: end });
+      const user = App.getCurrentUser();
+
+      const res = await Api.createMeeting({
+        title,
+        body,
+        startDate: start,
+        endDate: end,
+        token: user?.fcmToken
+      });
+
       if (res.success) {
         UI.showSendResult('✅ ' + res.message, 'success');
-        _resetCreateForm();
+        _resetForm();
         loadMeetings();
         loadAdminStats();
       } else {
-        throw new Error(res.error || 'Gửi thất bại.');
+        throw new Error(res.error || 'Gửi thất bại');
       }
+
     } catch (err) {
       UI.showSendResult('❌ ' + err.message, 'error');
     } finally {
@@ -63,67 +75,126 @@ const Meetings = (() => {
     }
   }
 
-  function _resetCreateForm() {
-    ['noti-title', 'noti-body', 'noti-start', 'noti-end'].forEach(id => {
-      document.getElementById(id).value = '';
-    });
+  function _resetForm() {
+    ['noti-title', 'noti-body', 'noti-start', 'noti-end']
+      .forEach(id => document.getElementById(id).value = '');
   }
 
-  // ── LOAD MEETINGS (Admin & User) ─────────────
-
+  // ─────────────────────────────
+  // LOAD MEETINGS (CẢ ADMIN & USER)
+  // ─────────────────────────────
   async function loadMeetings() {
     const user    = App.getCurrentUser();
     const isAdmin = user && user.rule === 'admin';
-    const listId  = isAdmin ? 'admin-meeting-list' : 'user-meeting-list';
-    const el      = document.getElementById(listId);
+
+    const listId = isAdmin ? 'admin-meeting-list' : 'user-meeting-list';
+    const el     = document.getElementById(listId);
 
     el.innerHTML = UI.loadingState();
 
     try {
-      const res = await Api.getMeetings();
+      const res = await Api.getMeetings(user?.fcmToken);
+
       if (!res || !res.meetings || res.meetings.length === 0) {
         el.innerHTML = UI.emptyState(
-          isAdmin ? 'Chưa có cuộc họp nào. Tạo thông báo đầu tiên!' : 'Không có cuộc họp nào đang chờ xác nhận.'
+          isAdmin
+            ? 'Chưa có cuộc họp nào.'
+            : 'Không có cuộc họp cần phản hồi.'
         );
         return;
       }
 
       el.innerHTML = '';
+
       res.meetings.forEach(m => {
         const card = isAdmin
-          ? UI.buildAdminCard(m)
+          ? _buildAdminCard(m)
           : UI.buildUserCard(m, _handleRSVP);
+
         el.appendChild(card);
       });
 
     } catch (err) {
-      el.innerHTML = `<div class="empty"><p style="color:var(--red)">Lỗi: ${Utils.escHtml(err.message)}</p></div>`;
+      el.innerHTML = `<div class="empty"><p style="color:red">${err.message}</p></div>`;
     }
   }
 
-  // ── USER: RSVP ───────────────────────────────
+  // ─────────────────────────────
+  // ADMIN CARD (CÓ %)
+  // ─────────────────────────────
+  function _buildAdminCard(m) {
+    const div = document.createElement('div');
+    div.className = 'meeting-card';
 
+    const expired = m.endDate && new Date() > new Date(m.endDate);
+
+    div.innerHTML = `
+      <div class="meeting-header">
+        <div>
+          <div class="meeting-name">${Utils.escHtml(m.title)}</div>
+          <div class="meeting-body">${Utils.escHtml(m.body)}</div>
+        </div>
+        <span class="badge ${expired ? 'badge-expired' : 'badge-active'}">
+          ${expired ? 'Đã kết thúc' : 'Đang mở'}
+        </span>
+      </div>
+
+      <div class="meeting-meta">
+        ${m.startDate ? `<span>📅 ${Utils.fmtDate(m.startDate)}</span>` : ''}
+        ${m.endDate ? `<span>⏰ Hạn: ${Utils.fmtDate(m.endDate)}</span>` : ''}
+      </div>
+
+      <div style="font-size:11px;color:#888;margin-bottom:10px">
+        ID: ${m.id}
+      </div>
+
+      <div class="response-summary">
+        <div class="res-chip yes">✅ ${m.yesCount}</div>
+        <div class="res-chip no">❌ ${m.noCount}</div>
+        <div class="res-chip pending">⏳ ${m.pendingCount}</div>
+      </div>
+
+      <div style="margin-top:10px;font-size:12px;color:#555">
+        % tham gia: <b>${m.percentYes}%</b>
+      </div>
+    `;
+
+    return div;
+  }
+
+  // ─────────────────────────────
+  // USER RSVP
+  // ─────────────────────────────
   async function _handleRSVP(meetingId, response, btnEl) {
     const row = btnEl.closest('.rsvp-row');
-    // Disable tất cả nút trong row khi đang gửi
     row.querySelectorAll('button').forEach(b => b.disabled = true);
 
     try {
       const user = App.getCurrentUser();
-      const res  = await Api.submitRSVP(meetingId, response, user.fcmToken);
+
+      const res = await Api.submitRSVP(
+        meetingId,
+        response,
+        user.fcmToken
+      );
 
       if (res.success) {
         UI.markRSVPChosen(meetingId, response);
-        UI.showPopup('Đã ghi nhận!', 'Phản hồi của bạn: ' + response);
+        UI.showPopup('Đã ghi nhận', 'Bạn chọn: ' + response);
       } else {
-        throw new Error(res.error || 'Có lỗi khi gửi phản hồi.');
+        throw new Error(res.error || 'Lỗi gửi phản hồi');
       }
+
     } catch (err) {
       alert(err.message);
-      // Re-enable nút nếu lỗi
       row.querySelectorAll('button').forEach(b => b.disabled = false);
     }
   }
 
-  return { loadMeetings, createMeeting, loadAdminStats };
+  return {
+    loadMeetings,
+    createMeeting,
+    loadAdminStats
+  };
+
 })();
