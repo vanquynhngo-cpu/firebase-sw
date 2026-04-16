@@ -41,14 +41,13 @@ const Meetings = (() => {
     UI.btnLoading(btn, 'Đang gửi...');
 
     try {
-      const user = App.getCurrentUser();
-
+      // Đã bỏ: const user = App.getCurrentUser();
+      // Chỉ gửi dữ liệu form, không gửi token nữa
       const res = await Api.createMeeting({
         title,
         body,
         startDate: start,
-        endDate: end,
-        token: user?.fcmToken
+        endDate: end
       });
 
       if (!res.success) {
@@ -88,7 +87,8 @@ const Meetings = (() => {
     el.innerHTML = UI.loadingState();
 
     try {
-      const res = await Api.getMeetings(user?.fcmToken);
+      // Đã bỏ truyền user.fcmToken vào api
+      const res = await Api.getMeetings();
 
       if (!res?.meetings?.length) {
         el.innerHTML = UI.emptyState(
@@ -171,13 +171,9 @@ const Meetings = (() => {
     row.querySelectorAll('button').forEach(b => b.disabled = true);
 
     try {
-      const user = App.getCurrentUser();
-
-      const res = await Api.submitRSVP(
-        meetingId,
-        response,
-        user.fcmToken
-      );
+      // Đã bỏ: const user = App.getCurrentUser();
+      // Chỉ gửi 2 tham số như yêu cầu
+      const res = await Api.submitRSVP(meetingId, response);
 
       if (!res.success) {
         throw new Error(res.error || 'Lỗi gửi phản hồi');
