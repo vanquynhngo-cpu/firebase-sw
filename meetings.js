@@ -183,18 +183,28 @@ const Meetings = (() => {
     }
   }
   function showUsers(type, meetingId) {
-    const m = _meetingCache[meetingId];
-    if (!m) return;
-  
-    let list = [];
-  
-    if (type === 'yes') list = m.yesUsers || [];
-    if (type === 'no') list = m.noUsers || [];
-    if (type === 'pending') list = m.pendingUsers || [];
-  
-    if (list.length === 0) {
-      UI.showPopup('Thông báo', 'Không có dữ liệu');
-      return;
+      const m = _meetingCache[meetingId];
+      if (!m) return;
+    
+      let list = [];
+      let title = '';
+    
+      if (type === 'yes') {
+        list = m.yesUsers;
+        title = 'Danh sách tham gia';
+      }
+    
+      if (type === 'no') {
+        list = m.noUsers;
+        title = 'Danh sách vắng mặt';
+      }
+    
+      if (type === 'pending') {
+        list = m.pendingUsers;
+        title = 'Chưa phản hồi';
+      }
+    
+      UI.showUserModal(title, list);
     }
   
     const html = list.map(name => `• ${name}`).join('<br>');
