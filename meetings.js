@@ -1,5 +1,7 @@
 const Meetings = (() => {
 
+  let _meetingCache = {};
+
   // ─────────────────────────────
   // ADMIN: LOAD STATS
   // ─────────────────────────────
@@ -49,14 +51,15 @@ const Meetings = (() => {
         token: user?.fcmToken
       });
 
-      if (res.success) {
-        UI.showSendResult('✅ ' + res.message, 'success');
-        _resetForm();
-        await loadMeetings(); // reload ngay
-        loadAdminStats();
-      } else {
+      if (!res.success) {
         throw new Error(res.error || 'Gửi thất bại');
       }
+
+      UI.showSendResult('✅ ' + res.message, 'success');
+
+      _resetForm();
+      await loadMeetings();
+      loadAdminStats();
 
     } catch (err) {
       UI.showSendResult('❌ ' + err.message, 'error');
@@ -69,11 +72,13 @@ const Meetings = (() => {
     ['noti-title', 'noti-body', 'noti-start', 'noti-end']
       .forEach(id => document.getElementById(id).value = '');
   }
-  let _meetingCache = {};
+
   // ─────────────────────────────
   // LOAD MEETINGS
   // ─────────────────────────────
   async function loadMeetings() {
+    _meetingCache = {};
+
     const user    = App.getCurrentUser();
     const isAdmin = user && user.rule === 'admin';
 
@@ -95,7 +100,8 @@ const Meetings = (() => {
       el.innerHTML = '';
 
       res.meetings.forEach(m => {
-        _meetingCache[m.id] = m; // cache lại
+        _meetingCache[m.id] = m;
+
         const card = isAdmin
           ? _buildAdminCard(m)
           : UI.buildUserCard(m, _handleRSVP);
@@ -138,9 +144,15 @@ const Meetings = (() => {
       </div>
 
       <div class="response-summary">
-        <div class="res-chip yes" onclick="Meetings.showUsers('yes', ${m.id})">✅ ${m.yesCount}</div>
-        <div class="res-chip no" onclick="Meetings.showUsers('no', ${m.id})">❌ ${m.noCount}</div>
-        <div class="res-chip pending" onclick="Meetings.showUsers('pending', ${m.id})">⏳ ${m.pendingCount}</div>
+        <div class="res-chip yes" onclick="Meetings.showUsers('yes', '${m.id}')">
+          ✅ ${m.yesCount}
+        </div>
+        <div class="res-chip no" onclick="Meetings.showUsers('no', '${m.id}')">
+          ❌ ${m.noCount}
+        </div>
+        <div class="res-chip pending" onclick="Meetings.showUsers('pending', '${m.id}')">
+          ⏳ ${m.pendingCount}
+        </div>
       </div>
 
       <div style="margin-top:10px;font-size:12px;color:#555">
@@ -154,9 +166,8 @@ const Meetings = (() => {
   // ─────────────────────────────
   // USER RSVP
   // ─────────────────────────────
-  async function _handleRSVP(meetingId, response, btnEl) {
-    const row = btnEl.closest('.rsvp-row');
-
+  async function _handleRSVP(meetingId, response, btn) {
+    const row = btn.closest('.rsvp-row');
     row.querySelectorAll('button').forEach(b => b.disabled = true);
 
     try {
@@ -174,45 +185,40 @@ const Meetings = (() => {
 
       UI.showPopup('Đã ghi nhận', 'Bạn chọn: ' + response);
 
-      // 🔥 QUAN TRỌNG: reload lại list để cập nhật myResponse
       await loadMeetings();
 
-    } catch (err) {
-      alert(err.message);
+    } catch (e) {
+      alert(e.message);
       row.querySelectorAll('button').forEach(b => b.disabled = false);
     }
   }
+
+  // ─────────────────────────────
+  // SHOW USERS (MODAL)
+  // ─────────────────────────────
   function showUsers(type, meetingId) {
-      const m = _meetingCache[meetingId];
-      if (!m) return;
-    
-      let list = [];
-      let title = '';
-    
-      if (type === 'yes') {
-        list = m.yesUsers;
-        title = 'Danh sách tham gia';
-      }
-    
-      if (type === 'no') {
-        list = m.noUsers;
-        title = 'Danh sách vắng mặt';
-      }
-    
-      if (type === 'pending') {
-        list = m.pendingUsers;
-        title = 'Chưa phản hồi';
-      }
-    
-      UI.showUserModal(title, list);
+    const m = _meetingCache[meetingId];
+    if (!m) return;
+
+    let list = [];
+    let title = '';
+
+    if (type === 'yes') {
+      list = m.yesUsers || [];
+      title = 'Danh sách tham gia';
     }
-  
-    const html = list.map(name => `• ${name}`).join('<br>');
-  
-    UI.showPopup(
-      'Danh sách',
-      html
-    );
+
+    if (type === 'no') {
+      list = m.noUsers || [];
+      title = 'Danh sách vắng mặt';
+    }
+
+    if (type === 'pending') {
+      list = m.pendingUsers || [];
+      title = 'Chưa phản hồi';
+    }
+
+    UI.showUserModal(title, list);
   }
 
   return {
