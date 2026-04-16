@@ -1,94 +1,32 @@
-importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
+/**
+ * config.js
+ * ─────────────────────────────────────────────
+ * Tập trung toàn bộ cấu hình ứng dụng.
+ * Chỉ cần chỉnh sửa file này khi đổi backend/Firebase.
+ */
 
-firebase.initializeApp({
-  apiKey:            "AIzaSyCv_sjgaGsGsRgthyXGmE-eztH93RJlXUE",
-  authDomain:        "thongbaocuochop-da595.firebaseapp.com",
-  projectId:         "thongbaocuochop-da595",
-  messagingSenderId: "361920499933",
-  appId:             "1:361920499933:web:c994f744e2d64f0c6acb34"
-});
+const CONFIG = {
+  /** URL Google Apps Script (backend) */
+  GAS_URL: "https://script.google.com/macros/s/AKfycbyiFxIzwImjYgQh85cdR2BdElDozHFFISIbI6GEXmksDPz9gpLPAS9MZnhhKa_8FEqyXQ/exec",
 
-const messaging = firebase.messaging();
+  /** VAPID key cho Firebase Cloud Messaging */
+  VAPID: "BNL5Qb8_WQlsWgsbgzWY8iSpPMHmWFoUklwF9r2dk6dZkf6rfj6C1bUkO-6n11EGxGilAjYh-sjsZw_WCpJvC4k",
 
-// ==========================================
-// 1. XỬ LÝ HIỂN THỊ THÔNG BÁO DƯỚI NỀN
-// ==========================================
-messaging.onBackgroundMessage((payload) => {
-  console.log('Nhận được thông báo nền:', payload);
+  /** Đường dẫn service worker */
+  SW_URL: "./firebase-messaging-sw.js",
 
-  const { title, body, icon } = payload.notification;
-  const data = payload.data || {};
+  /** Firebase project config */
+  FIREBASE: {
+    apiKey:            "AIzaSyCv_sjgaGsGsRgthyXGmE-eztH93RJlXUE",
+    authDomain:        "thongbaocuochop-da595.firebaseapp.com",
+    projectId:         "thongbaocuochop-da595",
+    messagingSenderId: "361920499933",
+    appId:             "1:361920499933:web:c994f744e2d64f0c6acb34"
+  },
 
-  // Tự động phân loại nút bấm
-  let actions = [];
-  if (data.type === 'meeting_rsvp') {
-    actions = [
-      { action: 'yes', title: '✅ Tham gia' },
-      { action: 'no', title: '❌ Vắng mặt' }
-    ];
-  } else {
-    actions = [
-      { action: 'open', title: 'Mở ứng dụng' },
-      { action: 'close', title: 'Đóng' }
-    ];
-  }
+  /** Thời gian tự ẩn popup (ms) */
+  POPUP_DURATION: 5000,
 
-  self.registration.showNotification(title, {
-    body:  body,
-    icon:  icon || 'https://firebase.google.com/images/brand-guidelines/logo-logomark.png',
-    badge: icon || '',
-    data:  data, // Truyền dữ liệu ngầm vào để lát click còn lấy ra dùng
-    actions: actions
-  });
-});
-
-// ==========================================
-// 2. XỬ LÝ SỰ KIỆN KHI BẤM NÚT YES / NO
-// ==========================================
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-
-  const action = event.action;
-  const data = event.notification.data || {};
-
-  // Xử lý ĐIỂM DANH (Gửi ngầm, không mở app)
-  if (action === 'yes' || action === 'no') {
-    const responseValue = (action === 'yes') ? 'Tham gia' : 'Không tham gia';
-    
-    // URL API của Google Apps Script của bạn
-    const gasApiUrl = "https://script.google.com/macros/s/AKfycbyiFxIzwImjYgQh85cdR2BdElDozHFFISIbI6GEXmksDPz9gpLPAS9MZnhhKa_8FEqyXQ/exec";
-
-    event.waitUntil(
-      fetch(gasApiUrl, {
-        method: 'POST',
-        body: JSON.stringify({
-          action: 'submitResponse',
-          notificationId: data.notificationId,
-          response: responseValue,
-          token: data.token // Dùng token để backend biết ai là người bấm
-        })
-      })
-      .then(res => res.json())
-      .then(resData => console.log("Gửi phản hồi thành công:", resData))
-      .catch(err => console.error("Lỗi gửi phản hồi:", err))
-    );
-    return; // Dừng hàm, KHÔNG mở cửa sổ mới
-  }
-
-  // Xử lý các nút khác
-  if (action === 'close') return;
-
-  // Bấm vào thông báo chung -> Mở Web App
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then((clientList) => {
-        for (const client of clientList) {
-          if ('focus' in client) return client.focus();
-        }
-        if (clients.openWindow) {
-          return clients.openWindow('https://vanquynhngo-cpu.github.io/firebase-sw/');
-        }
-      })
-  );
-});
+  /** Thời gian tự ẩn send-result (ms) */
+  RESULT_DURATION: 6000,
+};
