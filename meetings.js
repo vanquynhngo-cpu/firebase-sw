@@ -69,7 +69,7 @@ const Meetings = (() => {
     ['noti-title', 'noti-body', 'noti-start', 'noti-end']
       .forEach(id => document.getElementById(id).value = '');
   }
-
+  let _meetingCache = {};
   // ─────────────────────────────
   // LOAD MEETINGS
   // ─────────────────────────────
@@ -95,6 +95,7 @@ const Meetings = (() => {
       el.innerHTML = '';
 
       res.meetings.forEach(m => {
+        _meetingCache[m.id] = m; // cache lại
         const card = isAdmin
           ? _buildAdminCard(m)
           : UI.buildUserCard(m, _handleRSVP);
@@ -137,9 +138,9 @@ const Meetings = (() => {
       </div>
 
       <div class="response-summary">
-        <div class="res-chip yes">✅ ${m.yesCount}</div>
-        <div class="res-chip no">❌ ${m.noCount}</div>
-        <div class="res-chip pending">⏳ ${m.pendingCount}</div>
+        <div class="res-chip yes" onclick="Meetings.showUsers('yes', ${m.id})">✅ ${m.yesCount}</div>
+        <div class="res-chip no" onclick="Meetings.showUsers('no', ${m.id})">❌ ${m.noCount}</div>
+        <div class="res-chip pending" onclick="Meetings.showUsers('pending', ${m.id})">⏳ ${m.pendingCount}</div>
       </div>
 
       <div style="margin-top:10px;font-size:12px;color:#555">
@@ -181,11 +182,34 @@ const Meetings = (() => {
       row.querySelectorAll('button').forEach(b => b.disabled = false);
     }
   }
+  function showUsers(type, meetingId) {
+    const m = _meetingCache[meetingId];
+    if (!m) return;
+  
+    let list = [];
+  
+    if (type === 'yes') list = m.yesUsers || [];
+    if (type === 'no') list = m.noUsers || [];
+    if (type === 'pending') list = m.pendingUsers || [];
+  
+    if (list.length === 0) {
+      UI.showPopup('Thông báo', 'Không có dữ liệu');
+      return;
+    }
+  
+    const html = list.map(name => `• ${name}`).join('<br>');
+  
+    UI.showPopup(
+      'Danh sách',
+      html
+    );
+  }
 
   return {
     loadMeetings,
     createMeeting,
-    loadAdminStats
+    loadAdminStats,
+    showUsers
   };
 
 })();
