@@ -56,12 +56,49 @@ const Api = (() => {
    * Lấy danh sách tất cả cuộc họp
    * @returns {Promise<{meetings: Array}>}
    */
-  async function getMeetings() {
-    return _get({ 
-      action: 'getMeetings',
-      sessionToken: localStorage.getItem('sessionToken')
-    });
-  }
+// ── MEETINGS (CẦN SESSION TOKEN) ──────────────
+
+  /**
+   * Lấy danh sách tất cả cuộc họp (Có Cache)
+   * @param {boolean} forceRefresh - Bỏ qua cache và tải lại từ server
+   * @returns {Promise<{meetings: Array}>}
+   */
+    async function getMeetings(forceRefresh = false) {
+        const CACHE_KEY = 'meetings_data';
+
+        // 1. Thử lấy từ cache trước (nếu không ép reload)
+        if (!forceRefresh) {
+            try {
+            const cachedData = sessionStorage.getItem(CACHE_KEY);
+            if (cachedData) return JSON.parse(cachedData);
+            } catch {
+            sessionStorage.removeItem(CACHE_KEY);
+            }
+        }
+
+        // 2. Gọi API lấy data mới từ server
+        const data = await _get({
+            action: 'getMeetings',
+            sessionToken: localStorage.getItem('sessionToken')
+        });
+
+        if (!data?.meetings) return data;
+
+        // 3. Lưu cache phiên bản "slim" — bỏ 3 mảng tên user
+        //    (chúng chỉ cần khi admin mở modal, không cần trong list view)
+        try {
+            const slim = {
+            meetings: data.meetings.map(({ yesUsers, noUsers, pendingUsers, ...rest }) => rest)
+            };
+            sessionStorage.setItem(CACHE_KEY, JSON.stringify(slim));
+        } catch {
+            // Data vẫn quá lớn (rất hiếm) → bỏ qua cache, không crash
+            sessionStorage.removeItem(CACHE_KEY);
+        }
+
+        // 4. Trả về data đầy đủ (có cả 3 mảng tên) để dùng ngay trong session này
+        return data;
+    }
 
   /**
    * Tạo thông báo cuộc họp mới (Admin)
@@ -86,12 +123,19 @@ const Api = (() => {
    * @returns {Promise<{success, error?}>}
    */
   async function submitRSVP(notificationId, response) {
-    return _post({ 
+    const result = await _post({ 
       action: 'submitResponse', 
       notificationId, 
       response,
       sessionToken: localStorage.getItem('sessionToken')
     });
+    
+    // Xoá cache ngay sau khi submit thành công để lần gọi getMeetings tiếp theo phải lấy data mới
+    if (result.success) {
+      sessionStorage.removeItem('meetings_data');
+    }
+    
+    return result;
   }
 
   // ── STATS (CẦN SESSION TOKEN - Admin) ─────────
