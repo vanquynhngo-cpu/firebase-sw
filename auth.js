@@ -12,7 +12,7 @@
 
 const Auth = (() => {
 
-  let _isLogin  = true;       // true = login tab, false = register tab
+  let _isLogin   = true;      // true = login tab, false = register tab
   let _messaging = null;      // Firebase Messaging instance
 
   // ── INIT ─────────────────────────────────────
@@ -58,10 +58,10 @@ const Auth = (() => {
 
     // Validate
     if (!phone || !password) {
-      return UI.showAuthStatus('Vui lòng nhập SĐT và mật khẩu!', 'error');
+      return UI.showAuthStatus('❌ Vui lòng nhập SĐT và mật khẩu!', 'error');
     }
     if (!_isLogin && !name) {
-      return UI.showAuthStatus('Vui lòng nhập tên hiển thị!', 'error');
+      return UI.showAuthStatus('❌ Vui lòng nhập tên hiển thị!', 'error');
     }
 
     const btn = document.getElementById('auth-btn');
@@ -99,7 +99,8 @@ const Auth = (() => {
       App.onLoginSuccess(user);
 
     } catch (err) {
-      UI.showAuthStatus(err.message, 'error');
+      // Thêm "❌ " vào trước message lỗi để UI hiển thị đúng format bạn muốn
+      UI.showAuthStatus('❌ ' + err.message, 'error');
       UI.btnRestore(btn);
     }
   }
