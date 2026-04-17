@@ -1,6 +1,11 @@
 const Meetings = (() => {
 
   let _meetingCache = {};
+  
+  // Các biến dùng cho Pagination
+  let _allMeetings = [];
+  let _displayedCount = 0;
+  const LIMIT = 20;
 
   // ─────────────────────────────
   // ADMIN: LOAD STATS
@@ -41,8 +46,6 @@ const Meetings = (() => {
     UI.btnLoading(btn, 'Đang gửi...');
 
     try {
-      // Đã bỏ: const user = App.getCurrentUser();
-      // Chỉ gửi dữ liệu form, không gửi token nữa
       const res = await Api.createMeeting({
         title,
         body,
@@ -77,6 +80,8 @@ const Meetings = (() => {
   // ─────────────────────────────
   async function loadMeetings() {
     _meetingCache = {};
+    _allMeetings = [];
+    _displayedCount = 0;
 
     const user    = App.getCurrentUser();
     const isAdmin = user && user.rule === 'admin';
@@ -87,7 +92,6 @@ const Meetings = (() => {
     el.innerHTML = UI.loadingState();
 
     try {
-      // Đã bỏ truyền user.fcmToken vào api
       const res = await Api.getMeetings();
 
       if (!res?.meetings?.length) {
@@ -97,20 +101,73 @@ const Meetings = (() => {
         return;
       }
 
-      el.innerHTML = '';
+      // Sắp xếp
+      const meetings = [...res.meetings].sort((a, b) => {
+        const now = new Date();
+        const aExpired = a.endDate && new Date(a.endDate) < now;
+        const bExpired = b.endDate && new Date(b.endDate) < now;
 
-      res.meetings.forEach(m => {
-        _meetingCache[m.id] = m;
-
-        const card = isAdmin
-          ? _buildAdminCard(m)
-          : UI.buildUserCard(m, _handleRSVP);
-
-        el.appendChild(card);
+        if (aExpired !== bExpired) return aExpired ? 1 : -1;
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
       });
+
+      // Lọc meeting hết hạn đối với User
+      if (!isAdmin) {
+        _allMeetings = meetings.filter(m => !(m.endDate && new Date(m.endDate) < new Date()));
+      } else {
+        _allMeetings = meetings;
+      }
+
+      if (!_allMeetings.length) {
+        el.innerHTML = UI.emptyState('Không có cuộc họp nào đang diễn ra');
+        return;
+      }
+
+      el.innerHTML = '';
+      
+      // Gọi hàm render list theo cục (batch)
+      _renderNextBatch(el, isAdmin);
 
     } catch (err) {
       el.innerHTML = `<div class="empty"><p style="color:red">${err.message}</p></div>`;
+    }
+  }
+
+  // ==========================================
+  // 🔥 CHỈ RENDER 20 ITEM VÀ XỬ LÝ LOAD MORE
+  // ==========================================
+  function _renderNextBatch(el, isAdmin) {
+    // Xóa nút "Tải thêm" cũ trước khi append dữ liệu mới
+    const oldLoadMoreBtn = document.getElementById('load-more-btn');
+    if (oldLoadMoreBtn) oldLoadMoreBtn.remove();
+
+    // Cắt mảng 20 phần tử tiếp theo
+    const nextBatch = _allMeetings.slice(_displayedCount, _displayedCount + LIMIT);
+
+    nextBatch.forEach(m => {
+      _meetingCache[m.id] = m;
+      const card = isAdmin
+        ? _buildAdminCard(m)
+        : UI.buildUserCard(m, _handleRSVP);
+      el.appendChild(card);
+    });
+
+    _displayedCount += nextBatch.length;
+
+    // Nếu vẫn còn dữ liệu chưa render, tạo nút "Tải thêm"
+    if (_displayedCount < _allMeetings.length) {
+      const btn = document.createElement('button');
+      btn.id = 'load-more-btn';
+      btn.className = 'btn-secondary'; // Dùng class có sẵn trong CSS của bạn
+      btn.style.width = '100%';
+      btn.style.padding = '10px';
+      btn.style.marginTop = '15px';
+      btn.style.borderRadius = '8px';
+      btn.style.cursor = 'pointer';
+      btn.textContent = `Tải thêm (${_allMeetings.length - _displayedCount} mục nữa)`;
+      btn.onclick = () => _renderNextBatch(el, isAdmin);
+      
+      el.appendChild(btn);
     }
   }
 
@@ -167,21 +224,43 @@ const Meetings = (() => {
   // USER RSVP
   // ─────────────────────────────
   async function _handleRSVP(meetingId, response, btn) {
+    // Lưu lại cái thẻ HTML tổng chứa nút bấm này trước khi xử lý
+    const cardElement = btn.closest('.meeting-card');
+    
     const row = btn.closest('.rsvp-row');
     row.querySelectorAll('button').forEach(b => b.disabled = true);
 
     try {
-      // Đã bỏ: const user = App.getCurrentUser();
-      // Chỉ gửi 2 tham số như yêu cầu
       const res = await Api.submitRSVP(meetingId, response);
 
       if (!res.success) {
         throw new Error(res.error || 'Lỗi gửi phản hồi');
       }
 
-      UI.showPopup('Đã ghi nhận', 'Bạn chọn: ' + response);
+      const m = _meetingCache[meetingId];
+      const isUpdate = m && m.myResponse;
 
-      await loadMeetings();
+      // ==========================================
+      // 🔥 UPDATE LOCAL STATE & RENDER LẠI CARD ĐÓ
+      // ==========================================
+      if (m) {
+        m.myResponse = response;
+        
+        // Tạo lại giao diện duy nhất cho thẻ này
+        const newCardElement = UI.buildUserCard(m, _handleRSVP);
+        
+        // Tráo đổi DOM
+        if (cardElement) {
+          cardElement.replaceWith(newCardElement);
+        }
+      }
+
+      UI.showPopup(
+        isUpdate ? 'Đã cập nhật' : 'Đã ghi nhận',
+        'Bạn chọn: ' + response
+      );
+
+      // ĐÃ XÓA: await loadMeetings(); // Không reload toàn bộ mảng nữa
 
     } catch (e) {
       alert(e.message);
