@@ -1,145 +1,32 @@
 /**
- * auth.js
+ * config.js
  * ─────────────────────────────────────────────
- * Quản lý toàn bộ luồng xác thực:
- * - Chuyển tab Login / Register
- * - Xin quyền thông báo & lấy FCM token
- * - Gọi API đăng nhập / đăng ký
- * - Lưu/xóa session
- *
- * Phụ thuộc: CONFIG, Api, Utils, UI, App (callback)
+ * Tập trung toàn bộ cấu hình ứng dụng.
+ * Chỉ cần chỉnh sửa file này khi đổi backend/Firebase.
  */
 
-const Auth = (() => {
+const CONFIG = {
+  /** URL Google Apps Script (backend) */
+  GAS_URL: "https://script.google.com/macros/s/AKfycbxJqRCsTTKVC4tOoZihUGhAhVL5OMWr-fc1lVb_umO7WPkQAXsmpJLoo5ILtzIPRr52Hg/exec",
 
-  let _isLogin   = true;      // true = login tab, false = register tab
-  let _messaging = null;      // Firebase Messaging instance
+  /** VAPID key cho Firebase Cloud Messaging */
+  VAPID: "BNL5Qb8_WQlsWgsbgzWY8iSpPMHmWFoUklwF9r2dk6dZkf6rfj6C1bUkO-6n11EGxGilAjYh-sjsZw_WCpJvC4k",
 
-  // ── INIT ─────────────────────────────────────
+  /** Đường dẫn service worker */
+  SW_URL: "./firebase-messaging-sw.js",
 
-  function init(messagingInstance) {
-    _messaging = messagingInstance;
-  }
+  /** Firebase project config */
+  FIREBASE: {
+    apiKey:            "AIzaSyCv_sjgaGsGsRgthyXGmE-eztH93RJlXUE",
+    authDomain:        "thongbaocuochop-da595.firebaseapp.com",
+    projectId:         "thongbaocuochop-da595",
+    messagingSenderId: "361920499933",
+    appId:             "1:361920499933:web:c994f744e2d64f0c6acb34"
+  },
 
-  // ── TAB SWITCH ───────────────────────────────
+  /** Thời gian tự ẩn popup (ms) */
+  POPUP_DURATION: 5000,
 
-  function switchTab(mode) {
-    _isLogin = (mode === 'login');
-    document.getElementById('tab-login').classList.toggle('active',  _isLogin);
-    document.getElementById('tab-reg').classList.toggle('active',   !_isLogin);
-    document.getElementById('name-field').style.display = _isLogin ? 'none' : 'block';
-    document.getElementById('auth-btn').textContent     = _isLogin ? 'Đăng nhập' : 'Tạo tài khoản';
-    document.getElementById('auth-status').style.display = 'none';
-  }
-
-  // ── FCM TOKEN ────────────────────────────────
-
-  async function _getFCMToken() {
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') {
-      throw new Error('Vui lòng cho phép nhận thông báo để sử dụng ứng dụng.');
-    }
-    const swReg = await navigator.serviceWorker.register(CONFIG.SW_URL);
-    await navigator.serviceWorker.ready;
-    const token = await _messaging.getToken({
-      vapidKey: CONFIG.VAPID,
-      serviceWorkerRegistration: swReg,
-    });
-    if (!token) throw new Error('Không lấy được mã thiết bị. Thử lại sau.');
-    return token;
-  }
-
-  // ── HANDLE AUTH (Login hoặc Register) ────────
-
-  async function handleAuth() {
-    const phone    = document.getElementById('auth-phone').value.trim();
-    const password = document.getElementById('auth-password').value.trim();
-    const name     = document.getElementById('auth-name').value.trim();
-
-    // Validate
-    if (!phone || !password) {
-      return UI.showAuthStatus('❌ Vui lòng nhập SĐT và mật khẩu!', 'error');
-    }
-    if (!_isLogin && !name) {
-      return UI.showAuthStatus('❌ Vui lòng nhập tên hiển thị!', 'error');
-    }
-
-    const btn = document.getElementById('auth-btn');
-    UI.btnLoading(btn, _isLogin ? 'Đang đăng nhập...' : 'Đang tạo tài khoản...');
-
-    try {
-      UI.showAuthStatus('Đang thiết lập thiết bị...', 'info');
-      const fcmToken = await _getFCMToken();
-
-      UI.showAuthStatus('Đang xác thực...', 'info');
-
-      let user;
-      if (_isLogin) {
-        const res = await Api.login(phone, password, fcmToken);
-        if (!res.success) throw new Error(res.error || 'Xác thực thất bại.');
-        
-        // ==========================================
-        // LƯU SESSION TOKEN TỪ API XUỐNG LOCALSTORAGE
-        // ==========================================
-        if (res.sessionToken) {
-            localStorage.setItem('sessionToken', res.sessionToken);
-        }
-
-        user = res.user;
-      } else {
-        const res = await Api.register(phone, password, name, fcmToken);
-        if (!res.success) throw new Error(res.error || 'Đăng ký thất bại.');
-        user = { displayName: name, rule: 'user', userId: res.userId };
-      }
-
-      user.fcmToken = fcmToken;
-      Utils.saveSession('user', user);
-
-      // Callback sang App để hiển thị giao diện
-      App.onLoginSuccess(user);
-
-    } catch (err) {
-      // Thêm "❌ " vào trước message lỗi để UI hiển thị đúng format bạn muốn
-      UI.showAuthStatus('❌ ' + err.message, 'error');
-      UI.btnRestore(btn);
-    }
-  }
-
-  // ── LOGOUT ───────────────────────────────────
-
-  function logout() {
-    Utils.clearSession('user');
-    
-    // ==========================================
-    // XÓA SESSION TOKEN KHI ĐĂNG XUẤT
-    // ==========================================
-    localStorage.removeItem('sessionToken');
-
-    // Reset form
-    document.getElementById('auth-phone').value    = '';
-    document.getElementById('auth-password').value = '';
-    document.getElementById('auth-name').value     = '';
-    document.getElementById('auth-status').style.display = 'none';
-    document.getElementById('auth-btn').disabled   = false;
-    document.getElementById('auth-btn').textContent = 'Đăng nhập';
-
-    document.getElementById('app-screen').classList.remove('visible');
-    document.getElementById('auth-screen').style.display = 'flex';
-  }
-
-  // ── RESTORE SESSION ──────────────────────────
-
-  function restoreSession() {
-    const saved = Utils.loadSession('user');
-    const sessionToken = localStorage.getItem('sessionToken'); // Có thể dùng để check thêm nếu cần
-    
-    // Chỉ phục hồi khi có cả thông tin user (để hiển thị) và có sessionToken (để gọi API)
-    if (saved && sessionToken) {
-      App.onLoginSuccess(saved);
-      return true;
-    }
-    return false;
-  }
-
-  return { init, switchTab, handleAuth, logout, restoreSession };
-})();
+  /** Thời gian tự ẩn send-result (ms) */
+  RESULT_DURATION: 6000,
+};
