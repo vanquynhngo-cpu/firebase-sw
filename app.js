@@ -37,6 +37,10 @@ const App = (() => {
       UI.showPopup(title, body);
       
       if (_currentUser) {
+        // ✔ FIX TỐI ƯU CACHE: Xoá cache trước khi load lại
+        // Ép hệ thống bỏ qua sessionStorage và gọi API lấy data mới nhất từ server
+        sessionStorage.removeItem('meetings_data');
+
         // Load lại danh sách với sessionToken hiện tại
         const sessionToken = localStorage.getItem('sessionToken');
         if (sessionToken) Meetings.loadMeetings(sessionToken);
