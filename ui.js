@@ -99,32 +99,34 @@ const UI = (() => {
 
     const expired = m.endDate && new Date() > new Date(m.endDate);
 
-    let rsvpHTML = '';
+    const isYes = m.myResponse === 'Tham gia';
+    const isNo  = m.myResponse === 'Không tham gia';
 
-    if (m.myResponse) {
-      const isYes = m.myResponse === 'Tham gia';
-      const bg  = isYes ? 'var(--green-s)' : 'var(--red-s)';
-      const col = isYes ? 'var(--green)'   : 'var(--red)';
+    const rsvpHTML = `
+      <div class="rsvp-row">
+        <button 
+          class="btn-yes ${isYes ? 'chosen' : ''}" 
+          data-response="Tham gia"
+          ${expired ? 'disabled' : ''}>
+          ✅ Tham gia
+        </button>
 
-      rsvpHTML = `
-        <div style="
-          margin-top:10px;
-          padding:10px;
-          border-radius:8px;
-          background:${bg};
-          color:${col};
-        ">
-          Bạn đã chọn: <b>${Utils.escHtml(m.myResponse)}</b>
-        </div>
-      `;
-    } else {
-      rsvpHTML = `
-        <div class="rsvp-row">
-          <button class="btn-yes" data-response="Tham gia" ${expired ? 'disabled' : ''}>✅ Tham gia</button>
-          <button class="btn-no"  data-response="Không tham gia" ${expired ? 'disabled' : ''}>❌ Vắng mặt</button>
-        </div>
-      `;
-    }
+        <button 
+          class="btn-no ${isNo ? 'chosen' : ''}" 
+          data-response="Không tham gia"
+          ${expired ? 'disabled' : ''}>
+          ❌ Vắng mặt
+        </button>
+      </div>
+
+      ${
+        m.myResponse
+          ? `<div style="margin-top:8px;font-size:12px;color:#555">
+              Bạn đã chọn: <b>${Utils.escHtml(m.myResponse)}</b> (có thể thay đổi)
+            </div>`
+          : ''
+      }
+    `;
 
     div.innerHTML = `
       <div class="meeting-header">
@@ -139,15 +141,45 @@ const UI = (() => {
       ${rsvpHTML}
     `;
 
-    if (!m.myResponse) {
-      div.querySelectorAll('.rsvp-row button').forEach(btn => {
-        btn.addEventListener('click', () =>
-          onRSVP(m.id, btn.dataset.response, btn)
-        );
-      });
-    }
+    div.querySelectorAll('.rsvp-row button').forEach(btn => {
+      btn.addEventListener('click', () =>
+        onRSVP(m.id, btn.dataset.response, btn)
+      );
+    });
 
     return div;
+  }
+
+  // ─────────────────────────────
+  // RENDER LIST (FRAGMENT TỐI ƯU DOM)
+  // ─────────────────────────────
+  /**
+   * Render danh sách các cuộc họp bằng DocumentFragment
+   * @param {HTMLElement} containerEl - Khối DOM chứa danh sách
+   * @param {Array} meetings - Mảng dữ liệu meeting
+   * @param {Function} onRSVP - Hàm callback xử lý click
+   */
+  function renderMeetingList(containerEl, meetings, onRSVP) {
+    if (!containerEl) return;
+    
+    // Xóa trắng container trước khi render mới
+    containerEl.innerHTML = '';
+
+    if (!meetings || meetings.length === 0) {
+      containerEl.innerHTML = emptyState('Chưa có thông báo cuộc họp nào.');
+      return;
+    }
+
+    // ✔ KHỞI TẠO FRAGMENT
+    const frag = document.createDocumentFragment();
+
+    meetings.forEach(m => {
+      const card = buildUserCard(m, onRSVP);
+      frag.appendChild(card); // Gắn vào DOM ảo (nhanh, không gây reflow)
+    });
+
+    // ✔ DỘI TOÀN BỘ DOM ẢO VÀO DOM THẬT 1 LẦN DUY NHẤT
+    containerEl.appendChild(frag);
   }
 
   // ─────────────────────────────
@@ -163,6 +195,7 @@ const UI = (() => {
     if (!users || users.length === 0) {
       content.innerHTML = `<div>Không có dữ liệu</div>`;
     } else {
+      // innerHTML với chuỗi string join() vốn dĩ đã là O(1) DOM paint, nên không cần dùng Fragment ở đây
       content.innerHTML = users.map(u =>
         `<div class="modal-user">• ${Utils.escHtml(u)}</div>`
       ).join('');
@@ -175,6 +208,7 @@ const UI = (() => {
     document.getElementById('user-modal').classList.remove('show');
   }
 
+  // Nhớ export thêm renderMeetingList ra ngoài
   return {
     showPopup,
     closePopup,
@@ -185,6 +219,7 @@ const UI = (() => {
     emptyState,
     loadingState,
     buildUserCard,
+    renderMeetingList, 
     showUserModal,
     closeUserModal
   };
