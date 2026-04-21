@@ -26,11 +26,13 @@ const UI = (() => {
   // ─────────────────────────────
   // STATUS
   // ─────────────────────────────
-  function showAuthStatus(msg, type) {
-    const el = document.getElementById('auth-status');
-    el.textContent = msg;
-    el.className   = 'status-msg ' + type;
-  }
+    function showAuthStatus(msg, type) {
+        const el = document.getElementById('auth-status');
+        el.textContent = msg;
+        // Reset style inline (do logout/switchTab có thể đã set display:none bằng inline style)
+        el.style.display = '';
+        el.className = 'status-msg ' + type;
+    }
 
   function showSendResult(msg, type) {
     const el = document.getElementById('send-result');
