@@ -21,18 +21,18 @@ messaging.onBackgroundMessage((payload) => {
   const data = payload.data || {};
 
   // Tự động phân loại nút bấm
-  let actions = [];
-  if (data.type === 'meeting_rsvp') {
-    actions = [
-      { action: 'yes', title: '✅ Tham gia' },
-      { action: 'no', title: '❌ Vắng mặt' }
-    ];
-  } else {
-    actions = [
-      { action: 'open', title: 'Mở ứng dụng' },
-      { action: 'close', title: 'Đóng' }
-    ];
-  }
+  // let actions = [];
+  // if (data.type === 'meeting_rsvp') {
+  //   actions = [
+  //     { action: 'yes', title: '✅ Tham gia' },
+  //     { action: 'no', title: '❌ Vắng mặt' }
+  //   ];
+  // } else {
+  //   actions = [
+  //     { action: 'open', title: 'Mở ứng dụng' },
+  //     { action: 'close', title: 'Đóng' }
+  //   ];
+  // }
 
   self.registration.showNotification(title, {
     body:  body,
