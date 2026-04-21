@@ -3,6 +3,10 @@
  * ─────────────────────────────────────────────
  * Toàn bộ giao tiếp với Google Apps Script backend.
  * Thêm endpoint mới chỉ cần thêm function ở đây.
+ *
+ * Thay đổi so với phiên bản cũ:
+ * - Thêm hàm logout() → gọi API giải phóng slot trên server
+ * - Export thêm logout trong return
  */
 
 const Api = (() => {
@@ -50,55 +54,67 @@ const Api = (() => {
     return _post({ action: 'saveToken', phone, password, displayName, token });
   }
 
+  /**
+   * Đăng xuất — gọi server để xóa Session Token & Last Active,
+   * giải phóng slot trong giới hạn 30 user đồng thời.
+   * @param {string} sessionToken
+   * @returns {Promise<{success}>}
+   */
+  async function logout(sessionToken) {
+    return _post({ action: 'logout', sessionToken });
+  }
+
   // ── MEETINGS (CẦN SESSION TOKEN) ──────────────
 
   /**
    * Lấy danh sách tất cả cuộc họp
-   * @returns {Promise<{meetings: Array}>}
-   */
-// ── MEETINGS (CẦN SESSION TOKEN) ──────────────
-
-  /**
-   * Lấy danh sách tất cả cuộc họp (Có Cache)
    * @param {boolean} forceRefresh - Bỏ qua cache và tải lại từ server
    * @returns {Promise<{meetings: Array}>}
    */
-    async function getMeetings(forceRefresh = false) {
-        const CACHE_KEY = 'meetings_data';
+  async function getMeetings(forceRefresh = false) {
+    const CACHE_KEY    = 'meetings_data';
+    const sessionToken = localStorage.getItem('sessionToken');
 
-        // 1. Thử lấy từ cache trước (nếu không ép reload)
-        if (!forceRefresh) {
-            try {
-            const cachedData = sessionStorage.getItem(CACHE_KEY);
-            if (cachedData) return JSON.parse(cachedData);
-            } catch {
-            sessionStorage.removeItem(CACHE_KEY);
-            }
-        }
+    // Lấy thông tin user hiện tại để kiểm tra quyền
+    const user    = JSON.parse(sessionStorage.getItem('user') || '{}');
+    const isAdmin = user?.rule === 'admin';
 
-        // 2. Gọi API lấy data mới từ server
-        const data = await _get({
-            action: 'getMeetings',
-            sessionToken: localStorage.getItem('sessionToken')
-        });
-
-        if (!data?.meetings) return data;
-
-        // 3. Lưu cache phiên bản "slim" — bỏ 3 mảng tên user
-        //    (chúng chỉ cần khi admin mở modal, không cần trong list view)
-        try {
-            const slim = {
-            meetings: data.meetings.map(({ yesUsers, noUsers, pendingUsers, ...rest }) => rest)
-            };
-            sessionStorage.setItem(CACHE_KEY, JSON.stringify(slim));
-        } catch {
-            // Data vẫn quá lớn (rất hiếm) → bỏ qua cache, không crash
-            sessionStorage.removeItem(CACHE_KEY);
-        }
-
-        // 4. Trả về data đầy đủ (có cả 3 mảng tên) để dùng ngay trong session này
-        return data;
+    // ADMIN: Luôn gọi API để lấy dữ liệu mới nhất (bao gồm danh sách user điểm danh)
+    if (isAdmin) {
+      return await _get({ action: 'getMeetings', sessionToken });
     }
+
+    // ── LUỒNG DÀNH CHO USER BÌNH THƯỜNG (CÓ CACHE) ──
+
+    // 1. Thử lấy từ cache trước (nếu không ép reload)
+    if (!forceRefresh) {
+      try {
+        const cachedData = sessionStorage.getItem(CACHE_KEY);
+        if (cachedData) return JSON.parse(cachedData);
+      } catch {
+        sessionStorage.removeItem(CACHE_KEY);
+      }
+    }
+
+    // 2. Gọi API nếu không có cache hoặc ép reload
+    const data = await _get({ action: 'getMeetings', sessionToken });
+
+    if (!data?.meetings) return data;
+
+    // 3. Lưu slim cache (loại bỏ danh sách user chi tiết — chỉ dành cho User)
+    try {
+      const slim = {
+        meetings: data.meetings.map(({ yesUsers, noUsers, pendingUsers, ...rest }) => rest)
+      };
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify(slim));
+    } catch {
+      // Data quá lớn (rất hiếm) → bỏ qua cache, không crash
+      sessionStorage.removeItem(CACHE_KEY);
+    }
+
+    // 4. Trả về data đầy đủ để dùng ngay trong lượt render hiện tại
+    return data;
+  }
 
   /**
    * Tạo thông báo cuộc họp mới (Admin)
@@ -106,11 +122,11 @@ const Api = (() => {
    * @returns {Promise<{success, message?, error?}>}
    */
   async function createMeeting({ title, body, startDate, endDate }) {
-    return _post({ 
-      action: 'createMeetingNotification', 
-      title, 
-      body, 
-      startDate, 
+    return _post({
+      action: 'createMeetingNotification',
+      title,
+      body,
+      startDate,
       endDate,
       sessionToken: localStorage.getItem('sessionToken')
     });
@@ -123,18 +139,19 @@ const Api = (() => {
    * @returns {Promise<{success, error?}>}
    */
   async function submitRSVP(notificationId, response) {
-    const result = await _post({ 
-      action: 'submitResponse', 
-      notificationId, 
+    const result = await _post({
+      action: 'submitResponse',
+      notificationId,
       response,
       sessionToken: localStorage.getItem('sessionToken')
     });
-    
-    // Xoá cache ngay sau khi submit thành công để lần gọi getMeetings tiếp theo phải lấy data mới
+
+    // Xoá cache ngay sau khi submit thành công
+    // → lần gọi getMeetings tiếp theo bắt buộc lấy data mới từ server
     if (result.success) {
       sessionStorage.removeItem('meetings_data');
     }
-    
+
     return result;
   }
 
@@ -145,11 +162,12 @@ const Api = (() => {
    * @returns {Promise<{totalNotifications, totalUsers, activeToday}>}
    */
   async function getStats() {
-    return _get({ 
+    return _get({
       action: 'getStats',
       sessionToken: localStorage.getItem('sessionToken')
     });
   }
 
-  return { login, register, getMeetings, createMeeting, submitRSVP, getStats };
+  // ─────────────────────────────────────────────
+  return { login, register, logout, getMeetings, createMeeting, submitRSVP, getStats };
 })();
