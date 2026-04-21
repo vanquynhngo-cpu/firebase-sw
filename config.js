@@ -7,7 +7,7 @@
 
 const CONFIG = {
   /** URL Google Apps Script (backend) */
-  GAS_URL: "https://script.google.com/macros/s/AKfycbxvtdSymKvnZt1YghxUWYaKIhirJK0ocFAJhDL0FS1vT5vNnMRva372DZSEPblCG82QRg/exec",
+  GAS_URL: "https://script.google.com/macros/s/AKfycbwCjDARz2kho5xGlv7LhS9ZuZfnohxCiazxyV9dBEebCI4aUtbItUrvPcmJ_1SCdY7SMg/exec",
 
   /** VAPID key cho Firebase Cloud Messaging */
   VAPID: "BNL5Qb8_WQlsWgsbgzWY8iSpPMHmWFoUklwF9r2dk6dZkf6rfj6C1bUkO-6n11EGxGilAjYh-sjsZw_WCpJvC4k",
