@@ -224,49 +224,66 @@ const Meetings = (() => {
   // USER RSVP
   // ─────────────────────────────
   async function _handleRSVP(meetingId, response, btn) {
-    // Lưu lại cái thẻ HTML tổng chứa nút bấm này trước khi xử lý
-    const cardElement = btn.closest('.meeting-card');
-    
-    const row = btn.closest('.rsvp-row');
-    row.querySelectorAll('button').forEach(b => b.disabled = true);
+        const cardElement = btn.closest('.meeting-card');
+        const row = btn.closest('.rsvp-row');
 
-    try {
-      const res = await Api.submitRSVP(meetingId, response);
+        // ── LƯU TRẠNG THÁI CŨ ĐỂ ROLLBACK NẾU API THẤT BẠI ──
+        const m = _meetingCache[meetingId];
+        const previousResponse = m ? m.myResponse : null;
 
-      if (!res.success) {
-        throw new Error(res.error || 'Lỗi gửi phản hồi');
-      }
+        // Disable tất cả button trong row, thêm class loading
+        row.querySelectorAll('button').forEach(b => {
+            b.disabled = true;
+            b.style.opacity = '0.6';
+        });
 
-      const m = _meetingCache[meetingId];
-      const isUpdate = m && m.myResponse;
+        // Hiển thị trạng thái đang gửi ngay lập tức (feedback nhanh cho user)
+        btn.textContent = btn.dataset.response === 'Tham gia'
+            ? '⏳ Đang gửi...'
+            : '⏳ Đang gửi...';
 
-      // ==========================================
-      // 🔥 UPDATE LOCAL STATE & RENDER LẠI CARD ĐÓ
-      // ==========================================
-      if (m) {
-        m.myResponse = response;
-        
-        // Tạo lại giao diện duy nhất cho thẻ này
-        const newCardElement = UI.buildUserCard(m, _handleRSVP);
-        
-        // Tráo đổi DOM
-        if (cardElement) {
-          cardElement.replaceWith(newCardElement);
+        try {
+            const res = await Api.submitRSVP(meetingId, response);
+
+            if (!res.success) {
+            throw new Error(res.error || 'Lỗi gửi phản hồi');
+            }
+
+            // ── API THÀNH CÔNG → CẬP NHẬT CACHE VÀ RENDER LẠI CARD ──
+            if (m) {
+            const isUpdate = !!m.myResponse;
+            m.myResponse = response;
+
+            const newCardElement = UI.buildUserCard(m, _handleRSVP);
+            if (cardElement) cardElement.replaceWith(newCardElement);
+
+            UI.showPopup(
+                isUpdate ? 'Đã cập nhật' : 'Đã ghi nhận',
+                'Bạn chọn: ' + response
+            );
+            }
+
+        } catch (e) {
+            // ── API THẤT BẠI → ROLLBACK VỀ TRẠNG THÁI CŨ ──
+            if (m) {
+            // Khôi phục myResponse về giá trị trước đó
+            m.myResponse = previousResponse;
+
+            // Render lại card với trạng thái cũ
+            const rolledBackCard = UI.buildUserCard(m, _handleRSVP);
+            if (cardElement) cardElement.replaceWith(rolledBackCard);
+            } else {
+            // Fallback nếu không có cache: chỉ re-enable button
+            row.querySelectorAll('button').forEach(b => {
+                b.disabled = false;
+                b.style.opacity = '';
+            });
+            }
+
+            // Hiển thị lỗi rõ ràng cho user
+            UI.showPopup('❌ Gửi thất bại', e.message || 'Vui lòng thử lại.');
         }
-      }
-
-      UI.showPopup(
-        isUpdate ? 'Đã cập nhật' : 'Đã ghi nhận',
-        'Bạn chọn: ' + response
-      );
-
-      // ĐÃ XÓA: await loadMeetings(); // Không reload toàn bộ mảng nữa
-
-    } catch (e) {
-      alert(e.message);
-      row.querySelectorAll('button').forEach(b => b.disabled = false);
     }
-  }
 
   // ─────────────────────────────
   // SHOW USERS (MODAL)
