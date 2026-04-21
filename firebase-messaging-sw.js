@@ -57,21 +57,21 @@ self.addEventListener('notificationclick', (event) => {
     const responseValue = (action === 'yes') ? 'Tham gia' : 'Không tham gia';
     
     // URL API của Google Apps Script của bạn
-    const gasApiUrl = "https://script.google.com/macros/s/AKfycbxSlMFplMk4uBq4sAPmsuSOhP0-VZRSjzP1K0l_X_C7EF0gIJFhX5ZCgVOfYjX0TX71kg/exec";
+    const gasApiUrl = "https://script.google.com/macros/s/AKfycbxvtdSymKvnZt1YghxUWYaKIhirJK0ocFAJhDL0FS1vT5vNnMRva372DZSEPblCG82QRg/exec";
 
     event.waitUntil(
       fetch(gasApiUrl, {
         method: 'POST',
         body: JSON.stringify({
-          action: 'submitResponse',
+          action: 'submitResponseByToken',
           notificationId: data.notificationId,
           response: responseValue,
-          token: data.token // Dùng token để backend biết ai là người bấm
+          fcmToken: data.token // Dùng token để backend biết ai là người bấm
         })
-      })
+      })    
       .then(res => res.json())
-      .then(resData => console.log("Gửi phản hồi thành công:", resData))
-      .catch(err => console.error("Lỗi gửi phản hồi:", err))
+      .then(res => console.log("Kết quả:", res))
+      .catch(err => console.error("Lỗi:", err))
     );
     return; // Dừng hàm, KHÔNG mở cửa sổ mới
   }
